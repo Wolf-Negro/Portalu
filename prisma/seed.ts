@@ -72,8 +72,10 @@ async function main() {
   console.log("✅ Super admin creado");
 
   // Company
-  const company = await prisma.company.create({
-    data: {
+  const company = await prisma.company.upsert({
+    where: { id: "company-demo-001" },
+    update: {},
+    create: {
       id: "company-demo-001",
       name: "Empresa Demo Perú",
       website: "https://empresa-demo.pe",
