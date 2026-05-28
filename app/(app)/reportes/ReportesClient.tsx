@@ -104,6 +104,21 @@ export default function ReportesClient({ leads, opportunities, campaigns, users,
         {report === "mensual" && (
           <>
             <h3 className="font-semibold mb-4" style={{ color: "#e9e8e6" }}>Rendimiento mensual — últimos 6 meses</h3>
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              {[
+                { label: "Total leads", value: leads.length, color: "#7255b4" },
+                { label: "Ventas cerradas", value: opportunities.filter((o) => o.stage === "cerrado_ganado").length, color: "#22c55e" },
+                { label: "Ingresos totales", value: formatCurrency(opportunities.filter((o) => o.stage === "cerrado_ganado").reduce((a: number, o: any) => a + o.value, 0)), color: "#fa7553" },
+              ].map((s) => (
+                <div key={s.label} className="p-4 rounded-xl text-center"
+                  style={{ background: `${s.color}12`, border: `1px solid ${s.color}30` }}>
+                  <div className="number-hero text-2xl mb-1" style={{ background: `linear-gradient(160deg, #ffffff 0%, ${s.color} 100%)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                    {s.value}
+                  </div>
+                  <div className="text-xs" style={{ color: "#a09bbf" }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: -10 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(114,85,180,0.08)" />

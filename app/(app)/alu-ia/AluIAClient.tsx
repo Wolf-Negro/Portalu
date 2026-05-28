@@ -147,17 +147,22 @@ function ChatTab({ chatHistory, userId }: { chatHistory: ChatMessage[]; userId: 
               </div>
             )}
             <div
-              className="max-w-[80%] rounded-xl px-4 py-2.5 text-sm leading-relaxed"
+              className="max-w-[80%] px-4 py-2.5 text-sm leading-relaxed"
               style={{
                 background: msg.role === "user"
                   ? "linear-gradient(135deg, #2b096f 0%, #7255b4 100%)"
                   : "rgba(26,26,46,0.9)",
                 border: msg.role === "assistant" ? "1px solid rgba(114,85,180,0.2)" : "none",
+                borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
                 color: "#e9e8e6",
               }}
             >
               {msg.content || (loading && msg.role === "assistant" ? (
-                <span style={{ color: "#7255b4" }}>Pensando...</span>
+                <span className="flex items-center gap-1 py-1">
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                </span>
               ) : "")}
             </div>
           </div>

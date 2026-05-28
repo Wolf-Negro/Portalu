@@ -173,20 +173,24 @@ export default function WhatsAppClient({ conversations }: { conversations: any[]
                 messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`flex ${msg.direction === "outbound" ? "justify-end" : "justify-start"}`}
+                    className={`flex flex-col ${msg.direction === "outbound" ? "items-end" : "items-start"}`}
                   >
                     <div
-                      className="max-w-xs rounded-xl px-4 py-2.5 text-sm"
+                      className="max-w-xs px-4 py-2.5 text-sm"
                       style={{
                         background: msg.direction === "outbound"
                           ? "linear-gradient(135deg, #2b096f, #7255b4)"
                           : "rgba(26,26,46,0.9)",
                         border: msg.direction === "inbound" ? "1px solid rgba(114,85,180,0.2)" : "none",
+                        borderRadius: msg.direction === "outbound" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
                         color: "#e9e8e6",
                       }}
                     >
                       {msg.content}
                     </div>
+                    <span className="text-[10px] mt-0.5 px-1" style={{ color: "#5a5575" }}>
+                      {new Date(msg.createdAt).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
                   </div>
                 ))
               )}

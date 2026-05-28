@@ -561,7 +561,7 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
               {filtered.map((lead, i) => (
                 <tr
                   key={lead.id}
-                  className="transition-colors group"
+                  className="table-row-hover transition-colors group"
                   style={{
                     background: selected.has(lead.id) ? "rgba(43,9,111,0.2)" : "transparent",
                     borderBottom: i < filtered.length - 1 ? "1px solid rgba(114,85,180,0.08)" : "none",
@@ -576,7 +576,13 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
                     />
                   </td>
                   <td className="px-4 py-3.5">
-                    <span className="font-medium" style={{ color: "#e9e8e6" }}>{lead.name}</span>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
+                        style={{ background: "linear-gradient(135deg, #2b096f, #7255b4)", color: "#e9e8e6" }}>
+                        {lead.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="font-medium" style={{ color: "#e9e8e6" }}>{lead.name}</span>
+                    </div>
                   </td>
                   <td className="px-4 py-3.5" style={{ color: "#a09bbf" }}>{lead.phone || "—"}</td>
                   <td className="px-4 py-3.5 max-w-[160px] truncate" style={{ color: "#a09bbf" }}>
@@ -621,8 +627,14 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="text-center py-12 text-sm" style={{ color: "#5a5575" }}>
-                    No se encontraron leads con los filtros actuales
+                  <td colSpan={9} className="text-center py-14">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center"
+                        style={{ background: "rgba(114,85,180,0.1)", border: "1px solid rgba(114,85,180,0.2)" }}>
+                        <Search size={16} style={{ color: "#5a5575" }} />
+                      </div>
+                      <p className="text-sm" style={{ color: "#5a5575" }}>No se encontraron leads con los filtros actuales</p>
+                    </div>
                   </td>
                 </tr>
               )}

@@ -69,18 +69,23 @@ function StatCard({
   return (
     <div className="rounded-xl p-5 relative overflow-hidden transition-all hover:scale-[1.01]"
       style={{
-        background: "rgba(22,22,42,0.8)",
-        border: "1px solid rgba(114,85,180,0.18)",
+        background: "linear-gradient(145deg, rgba(20,20,40,0.95) 0%, rgba(14,14,28,0.95) 100%)",
+        border: "1px solid rgba(114,85,180,0.2)",
         backdropFilter: "blur(12px)",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.04)",
       }}>
       {/* Gradient accent top */}
-      <div className="absolute top-0 left-0 right-0 h-0.5"
-        style={{ background: accent || "linear-gradient(90deg, #2b096f, #7255b4)" }} />
+      <div className="absolute top-0 left-0 right-0"
+        style={{ height: 3, background: accent || "linear-gradient(90deg, #2b096f, #7255b4)" }} />
 
       <div className="flex items-start justify-between mb-4">
-        <div className="p-2 rounded-lg"
-          style={{ background: "rgba(43,9,111,0.4)", border: "1px solid rgba(114,85,180,0.2)" }}>
-          <Icon size={16} style={{ color: "#7255b4" }} />
+        <div className="p-2.5 rounded-xl"
+          style={{
+            background: "rgba(43,9,111,0.4)",
+            border: "1px solid rgba(114,85,180,0.25)",
+            boxShadow: "0 4px 12px rgba(43,9,111,0.35)",
+          }}>
+          <Icon size={18} style={{ color: "#9b82d4" }} />
         </div>
         {trend && (
           <div className="flex items-center gap-1 text-xs"
@@ -91,7 +96,7 @@ function StatCard({
         )}
       </div>
 
-      <div className="text-2xl font-bold mb-1" style={{ color: "#e9e8e6" }}>{value}</div>
+      <div className="number-hero text-3xl mb-1">{value}</div>
       <div className="text-sm font-medium mb-0.5" style={{ color: "#a09bbf" }}>{label}</div>
       <div className="text-xs" style={{ color: "#5a5575" }}>{sub}</div>
     </div>

@@ -31,6 +31,7 @@ interface Props {
 
 function OpportunityCard({ opp, index }: { opp: Opportunity; index: number }) {
   const [expanded, setExpanded] = useState(false);
+  const stageColor = STAGES.find((s) => s.id === opp.stage)?.color || "#7255b4";
   return (
     <Draggable draggableId={opp.id} index={index}>
       {(provided, snapshot) => (
@@ -45,7 +46,8 @@ function OpportunityCard({ opp, index }: { opp: Opportunity; index: number }) {
               ? "rgba(43,9,111,0.6)"
               : "rgba(26,26,46,0.9)",
             border: `1px solid ${snapshot.isDragging ? "rgba(114,85,180,0.6)" : "rgba(114,85,180,0.18)"}`,
-            boxShadow: snapshot.isDragging ? "0 8px 32px rgba(43,9,111,0.4)" : "none",
+            borderLeft: `3px solid ${stageColor}`,
+            boxShadow: snapshot.isDragging ? "0 8px 32px rgba(43,9,111,0.4)" : "0 2px 8px rgba(0,0,0,0.18)",
             userSelect: "none",
           }}
         >
@@ -145,11 +147,12 @@ export default function PipelineClient({ opportunities, companyId }: Props) {
             {STAGES.map((stage) => (
               <div
                 key={stage.id}
-                className="flex-shrink-0 flex flex-col rounded-xl"
+                className="flex-shrink-0 flex flex-col rounded-xl overflow-hidden"
                 style={{
                   width: 240,
                   background: "rgba(14,14,20,0.6)",
                   border: "1px solid rgba(114,85,180,0.15)",
+                  borderTop: `3px solid ${stage.color}`,
                 }}
               >
                 {/* Column header */}
