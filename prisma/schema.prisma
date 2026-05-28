@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id              String            @id @default(cuid())
+  name            String?
+  email           String?           @unique
+  emailVerified   DateTime?
+  image           String?
+  password        String?
+  role            String            @default("asesor")
+  companyId       String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  accounts        Account[]
+  sessions        Session[]
+  company         Company?          @relation(fields: [companyId], references: [id])
+  leadsAssigned   Lead[]            @relation("LeadAsesor")
+  activities      Activity[]
+  trainingProgress TrainingProgress[]
+  aluMessages     AluMessage[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Company {
+  id               String   @id @default(cuid())
+  name             String
+  logo             String?
+  website          String?
+  phone            String?
+  address          String?
+  plan             String   @default("starter")
+  active           Boolean  @default(true)
+  metaAdAccountId  String?
+  metaAccessToken  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  users            User[]
+  leads            Lead[]
+  opportunities    Opportunity[]
+  campaigns        Campaign[]
+  alerts           Alert[]
+  weeklySummaries  WeeklySummary[]
+}
+
+model Lead {
+  id          String    @id @default(cuid())
+  name        String
+  phone       String?
+  email       String?
+  origin      String    @default("otros")
+  status      String    @default("nuevo")
+  notes       String?
+  companyId   String
+  asesorId    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  company     Company   @relation(fields: [companyId], references: [id])
+  asesor      User?     @relation("LeadAsesor", fields: [asesorId], references: [id])
+  activities  Activity[]
+  opportunity Opportunity?
+}
+
+model Opportunity {
+  id          String     @id @default(cuid())
+  title       String
+  value       Float      @default(0)
+  stage       String     @default("nuevo_lead")
+  probability Int        @default(0)
+  notes       String?
+  leadId      String?    @unique
+  companyId   String
+  closedAt    DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  lead        Lead?      @relation(fields: [leadId], references: [id])
+  company     Company    @relation(fields: [companyId], references: [id])
+  activities  Activity[]
+}
+
+model Activity {
+  id             String       @id @default(cuid())
+  type           String
+  description    String
+  userId         String?
+  leadId         String?
+  opportunityId  String?
+  createdAt      DateTime     @default(now())
+  user           User?        @relation(fields: [userId], references: [id])
+  lead           Lead?        @relation(fields: [leadId], references: [id])
+  opportunity    Opportunity? @relation(fields: [opportunityId], references: [id])
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  name        String
+  platform    String   @default("meta")
+  status      String   @default("active")
+  budget      Float    @default(0)
+  spent       Float    @default(0)
+  reach       Int      @default(0)
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  leads       Int      @default(0)
+  cpl         Float    @default(0)
+  ctr         Float    @default(0)
+  roas        Float    @default(0)
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  companyId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id])
+}
+
+model Alert {
+  id          String   @id @default(cuid())
+  type        String
+  title       String
+  description String
+  severity    String   @default("media")
+  read        Boolean  @default(false)
+  companyId   String
+  createdAt   DateTime @default(now())
+  company     Company  @relation(fields: [companyId], references: [id])
+}
+
+model WeeklySummary {
+  id               String   @id @default(cuid())
+  weekStart        DateTime
+  weekEnd          DateTime
+  totalLeads       Int      @default(0)
+  totalOpportunities Int    @default(0)
+  totalRevenue     Float    @default(0)
+  bestCampaign     String?
+  aiRecommendation String?
+  content          String?
+  companyId        String
+  createdAt        DateTime @default(now())
+  company          Company  @relation(fields: [companyId], references: [id])
+}
+
+model TrainingModule {
+  id          String             @id @default(cuid())
+  title       String
+  description String
+  category    String
+  content     String
+  duration    Int                @default(30)
+  order       Int                @default(0)
+  published   Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  progress    TrainingProgress[]
+}
+
+model TrainingProgress {
+  id         String         @id @default(cuid())
+  userId     String
+  moduleId   String
+  completed  Boolean        @default(false)
+  score      Int?
+  startedAt  DateTime       @default(now())
+  completedAt DateTime?
+  user       User           @relation(fields: [userId], references: [id])
+  module     TrainingModule @relation(fields: [moduleId], references: [id])
+
+  @@unique([userId, moduleId])
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  contact   String
+  phone     String?
+  status    String    @default("open")
+  asesorId  String?
+  tags      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  content        String
+  direction      String       @default("inbound")
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+}
+
+model AluMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
