@@ -12,7 +12,7 @@ const INPUT_STYLE: React.CSSProperties = {
   border: "1px solid rgba(114,85,180,0.2)",
   borderRadius: 7,
   fontSize: 13.5,
-  color: "#e9e8e6",
+  color: "var(--color-text-primary)",
   outline: "none",
   boxSizing: "border-box",
   transition: "border-color 0.15s",
@@ -21,7 +21,7 @@ const INPUT_STYLE: React.CSSProperties = {
 const LABEL_STYLE: React.CSSProperties = {
   fontSize: 12,
   fontWeight: 600,
-  color: "#7a7590",
+  color: "var(--color-text-faint)",
   letterSpacing: "0.04em",
   textTransform: "uppercase",
   display: "block",
@@ -29,7 +29,7 @@ const LABEL_STYLE: React.CSSProperties = {
 };
 
 const SECTION_STYLE: React.CSSProperties = {
-  background: "rgba(14,14,28,0.7)",
+  background: "var(--color-surface-glass)",
   border: "1px solid rgba(114,85,180,0.14)",
   borderRadius: 12,
   padding: 24,
@@ -106,7 +106,7 @@ export default function NewCompanyPage() {
           alignItems: "center",
           gap: 6,
           fontSize: 13,
-          color: "#7a7590",
+          color: "var(--color-text-faint)",
           textDecoration: "none",
           marginBottom: 24,
           transition: "color 0.15s",
@@ -115,17 +115,17 @@ export default function NewCompanyPage() {
         <ArrowLeft size={14} /> Volver a clientes
       </Link>
 
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#e9e8e6", marginBottom: 6, letterSpacing: "-0.03em" }}>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--color-text-primary)", marginBottom: 6, letterSpacing: "-0.03em" }}>
         Nuevo Cliente
       </h1>
-      <p style={{ fontSize: 13, color: "#5a5575", marginBottom: 28 }}>
+      <p style={{ fontSize: 13, color: "var(--color-text-muted)", marginBottom: 28 }}>
         Crea una empresa y su usuario administrador inicial.
       </p>
 
       <form onSubmit={handleSubmit}>
         {/* ── Empresa ── */}
         <div style={SECTION_STYLE}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#fa7553", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 18 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--color-coral)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 18 }}>
             Empresa
           </div>
 
@@ -173,7 +173,7 @@ export default function NewCompanyPage() {
 
         {/* ── Meta Ads ── */}
         <div style={SECTION_STYLE}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#fa7553", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 18 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--color-coral)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 18 }}>
             Meta Ads
           </div>
 
@@ -203,11 +203,11 @@ export default function NewCompanyPage() {
                     type="radio"
                     checked={useOwnToken === opt.value}
                     onChange={() => setUseOwnToken(opt.value)}
-                    style={{ marginTop: 2, accentColor: "#7255b4" }}
+                    style={{ marginTop: 2, accentColor: "var(--color-lavender)" }}
                   />
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#e9e8e6" }}>{opt.label}</div>
-                    <div style={{ fontSize: 12, color: "#7a7590", marginTop: 2 }}>{opt.desc}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-primary)" }}>{opt.label}</div>
+                    <div style={{ fontSize: 12, color: "var(--color-text-faint)", marginTop: 2 }}>{opt.desc}</div>
                   </div>
                 </label>
               ))}
@@ -238,7 +238,7 @@ export default function NewCompanyPage() {
 
         {/* ── Usuario Admin ── */}
         <div style={SECTION_STYLE}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#fa7553", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 18 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--color-coral)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 18 }}>
             Usuario Administrador
           </div>
 
@@ -284,7 +284,7 @@ export default function NewCompanyPage() {
                     transform: "translateY(-50%)",
                     background: "none",
                     border: "none",
-                    color: "#5a5575",
+                    color: "var(--color-text-muted)",
                     cursor: "pointer",
                     padding: 0,
                     lineHeight: 1,
@@ -324,7 +324,7 @@ export default function NewCompanyPage() {
                 border: "1px solid rgba(114,85,180,0.2)",
                 borderRadius: 7,
                 fontSize: 13.5,
-                color: "#7a7590",
+                color: "var(--color-text-faint)",
                 cursor: "pointer",
               }}
             >
@@ -339,7 +339,7 @@ export default function NewCompanyPage() {
               alignItems: "center",
               gap: 8,
               padding: "10px 24px",
-              background: loading ? "rgba(43,9,111,0.4)" : "linear-gradient(135deg, #2b096f, #7255b4)",
+              background: loading ? "rgba(43,9,111,0.4)" : "linear-gradient(135deg, var(--color-violet-dim), var(--color-lavender))",
               border: "none",
               borderRadius: 7,
               fontSize: 13.5,

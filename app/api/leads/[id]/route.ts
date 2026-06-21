@@ -5,8 +5,14 @@ import prisma from "@/lib/prisma";
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const companyId = (session.user as any).companyId;
 
   const { id } = await params;
+  const existing = await prisma.lead.findUnique({ where: { id }, select: { companyId: true } });
+  if (!existing || existing.companyId !== companyId) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const body = await req.json();
   const lead = await prisma.lead.update({
     where: { id },
@@ -39,8 +45,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const companyId = (session.user as any).companyId;
 
   const { id } = await params;
+  const existing = await prisma.lead.findUnique({ where: { id }, select: { companyId: true } });
+  if (!existing || existing.companyId !== companyId) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   await prisma.lead.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }

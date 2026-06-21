@@ -4,11 +4,11 @@ import { useState } from "react";
 import { GraduationCap, Play, CheckCircle, Clock, BookOpen, X, ChevronRight } from "lucide-react";
 
 const CATEGORY_COLORS: Record<string, string> = {
-  ventas: "#7255b4",
-  marketing: "#fa7553",
+  ventas: "var(--color-lavender)",
+  marketing: "var(--color-coral)",
   metricas: "#3b82f6",
-  comunicacion: "#22c55e",
-  default: "#a09bbf",
+  comunicacion: "var(--color-success)",
+  default: "var(--color-text-secondary)",
 };
 
 interface Module {
@@ -60,63 +60,63 @@ function ModuleModal({ module, onClose, onComplete }: {
       style={{ background: "rgba(0,0,0,0.8)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="w-full max-w-2xl rounded-xl animate-slide-up flex flex-col"
-        style={{ background: "#1a1a2e", border: "1px solid rgba(114,85,180,0.3)", maxHeight: "85vh" }}>
+        style={{ background: "var(--color-surface-2)", border: "1px solid rgba(114,85,180,0.3)", maxHeight: "85vh" }}>
 
         <div className="flex items-center justify-between p-5 flex-shrink-0"
           style={{ borderBottom: "1px solid rgba(114,85,180,0.15)" }}>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg"
-              style={{ background: `${CATEGORY_COLORS[module.category] || CATEGORY_COLORS.default}22` }}>
+              style={{ background: `color-mix(in srgb, ${CATEGORY_COLORS[module.category] || CATEGORY_COLORS.default} 13%, transparent)` }}>
               <BookOpen size={14} style={{ color: CATEGORY_COLORS[module.category] || CATEGORY_COLORS.default }} />
             </div>
             <div>
-              <h2 className="font-bold text-sm" style={{ color: "#e9e8e6" }}>{module.title}</h2>
-              <p className="text-xs" style={{ color: "#5a5575" }}>{module.duration} min · {module.category}</p>
+              <h2 className="font-bold text-sm" style={{ color: "var(--color-text-primary)" }}>{module.title}</h2>
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>{module.duration} min · {module.category}</p>
             </div>
           </div>
-          <button onClick={onClose} style={{ color: "#5a5575" }}><X size={16} /></button>
+          <button onClick={onClose} style={{ color: "var(--color-text-muted)" }}><X size={16} /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5">
           {score !== null ? (
             <div className="text-center py-8">
               <div className={`text-5xl font-bold mb-3`}
-                style={{ color: score >= 70 ? "#22c55e" : "#ef4444" }}>
+                style={{ color: score >= 70 ? "var(--color-success)" : "var(--color-danger)" }}>
                 {score}%
               </div>
-              <p className="text-base font-semibold mb-2" style={{ color: "#e9e8e6" }}>
+              <p className="text-base font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>
                 {score >= 70 ? "¡Módulo completado!" : "Sigue practicando"}
               </p>
-              <p className="text-sm" style={{ color: "#a09bbf" }}>
+              <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
                 Respondiste correctamente {Math.round((score / 100) * questions.length)} de {questions.length} preguntas
               </p>
               <button onClick={onClose}
                 className="mt-6 px-6 py-2.5 rounded-xl text-sm font-medium"
-                style={{ background: "linear-gradient(135deg, #2b096f, #7255b4)", color: "#e9e8e6" }}>
+                style={{ background: "linear-gradient(135deg, var(--color-violet-dim), var(--color-lavender))", color: "var(--color-text-primary)" }}>
                 Continuar
               </button>
             </div>
           ) : step === "content" ? (
             <>
               <div className="prose prose-sm max-w-none mb-6">
-                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "#a09bbf" }}>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "var(--color-text-secondary)" }}>
                   {module.content || module.description}
                 </p>
               </div>
               <button
                 onClick={() => setStep("quiz")}
                 className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
-                style={{ background: "linear-gradient(135deg, #2b096f, #7255b4)", color: "#e9e8e6" }}>
+                style={{ background: "linear-gradient(135deg, var(--color-violet-dim), var(--color-lavender))", color: "var(--color-text-primary)" }}>
                 Ir al Quiz
                 <ChevronRight size={14} />
               </button>
             </>
           ) : (
             <>
-              <h3 className="text-sm font-semibold mb-4" style={{ color: "#e9e8e6" }}>Quiz de evaluación</h3>
+              <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--color-text-primary)" }}>Quiz de evaluación</h3>
               {questions.map((q, qi) => (
                 <div key={qi} className="mb-5">
-                  <p className="text-sm font-medium mb-3" style={{ color: "#e9e8e6" }}>
+                  <p className="text-sm font-medium mb-3" style={{ color: "var(--color-text-primary)" }}>
                     {qi + 1}. {q.q}
                   </p>
                   <div className="space-y-2">
@@ -128,7 +128,7 @@ function ModuleModal({ module, onClose, onComplete }: {
                         style={{
                           background: answers[qi] === oi ? "rgba(43,9,111,0.4)" : "rgba(26,26,46,0.6)",
                           border: `1px solid ${answers[qi] === oi ? "rgba(114,85,180,0.6)" : "rgba(114,85,180,0.15)"}`,
-                          color: answers[qi] === oi ? "#e9e8e6" : "#a09bbf",
+                          color: answers[qi] === oi ? "var(--color-text-primary)" : "var(--color-text-secondary)",
                         }}
                       >
                         {opt}
@@ -144,8 +144,8 @@ function ModuleModal({ module, onClose, onComplete }: {
                 style={{
                   background: Object.keys(answers).length < questions.length
                     ? "rgba(114,85,180,0.2)"
-                    : "linear-gradient(135deg, #2b096f, #7255b4)",
-                  color: "#e9e8e6",
+                    : "linear-gradient(135deg, var(--color-violet-dim), var(--color-lavender))",
+                  color: "var(--color-text-primary)",
                   cursor: Object.keys(answers).length < questions.length ? "not-allowed" : "pointer",
                 }}
               >
@@ -191,25 +191,25 @@ export default function EntrenamientoClient({ modules, progress, userId }: Props
       )}
 
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: "#e9e8e6" }}>Centro de Entrenamiento</h1>
-        <p className="text-sm mt-0.5" style={{ color: "#a09bbf" }}>
+        <h1 className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>Centro de Entrenamiento</h1>
+        <p className="text-sm mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
           {completed} de {modules.length} módulos completados
         </p>
       </div>
 
       {/* Progress bar */}
       <div className="rounded-xl p-5"
-        style={{ background: "rgba(22,22,42,0.8)", border: "1px solid rgba(114,85,180,0.18)" }}>
+        style={{ background: "var(--color-surface-glass)", border: "1px solid rgba(114,85,180,0.18)" }}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <GraduationCap size={16} style={{ color: "#7255b4" }} />
-            <span className="text-sm font-semibold" style={{ color: "#e9e8e6" }}>Tu progreso general</span>
+            <GraduationCap size={16} style={{ color: "var(--color-lavender)" }} />
+            <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>Tu progreso general</span>
           </div>
-          <span className="text-2xl font-bold" style={{ color: "#7255b4" }}>{totalPct}%</span>
+          <span className="text-2xl font-bold" style={{ color: "var(--color-lavender)" }}>{totalPct}%</span>
         </div>
         <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(114,85,180,0.15)" }}>
           <div className="h-full rounded-full transition-all"
-            style={{ width: `${totalPct}%`, background: "linear-gradient(90deg, #2b096f, #7255b4)" }} />
+            style={{ width: `${totalPct}%`, background: "linear-gradient(90deg, var(--color-violet-dim), var(--color-lavender))" }} />
         </div>
       </div>
 
@@ -224,38 +224,38 @@ export default function EntrenamientoClient({ modules, progress, userId }: Props
               key={mod.id}
               className="rounded-xl p-5 flex flex-col transition-all hover:scale-[1.01] cursor-pointer"
               style={{
-                background: "rgba(22,22,42,0.8)",
+                background: "var(--color-surface-glass)",
                 border: `1px solid ${isCompleted ? "rgba(34,197,94,0.3)" : "rgba(114,85,180,0.18)"}`,
               }}
               onClick={() => setSelectedModule(mod)}
             >
               <div className="flex items-start justify-between mb-3">
-                <div className="p-2 rounded-lg" style={{ background: `${color}22` }}>
+                <div className="p-2 rounded-lg" style={{ background: `color-mix(in srgb, ${color} 13%, transparent)` }}>
                   <BookOpen size={14} style={{ color }} />
                 </div>
                 {isCompleted ? (
-                  <div className="flex items-center gap-1 text-xs" style={{ color: "#22c55e" }}>
+                  <div className="flex items-center gap-1 text-xs" style={{ color: "var(--color-success)" }}>
                     <CheckCircle size={12} />
                     {prog.score !== null && prog.score !== undefined && `${prog.score}%`}
                   </div>
                 ) : (
-                  <Play size={14} style={{ color: "#5a5575" }} />
+                  <Play size={14} style={{ color: "var(--color-text-muted)" }} />
                 )}
               </div>
 
-              <h3 className="text-sm font-semibold mb-1.5 leading-snug" style={{ color: "#e9e8e6" }}>
+              <h3 className="text-sm font-semibold mb-1.5 leading-snug" style={{ color: "var(--color-text-primary)" }}>
                 {mod.title}
               </h3>
-              <p className="text-xs mb-3 flex-1 leading-relaxed" style={{ color: "#a09bbf" }}>
+              <p className="text-xs mb-3 flex-1 leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
                 {mod.description}
               </p>
 
               <div className="flex items-center justify-between">
                 <span className="text-xs px-2 py-0.5 rounded-full"
-                  style={{ background: `${color}22`, color }}>
+                  style={{ background: `color-mix(in srgb, ${color} 13%, transparent)`, color }}>
                   {mod.category}
                 </span>
-                <div className="flex items-center gap-1 text-xs" style={{ color: "#5a5575" }}>
+                <div className="flex items-center gap-1 text-xs" style={{ color: "var(--color-text-muted)" }}>
                   <Clock size={10} />
                   {mod.duration} min
                 </div>
@@ -266,8 +266,8 @@ export default function EntrenamientoClient({ modules, progress, userId }: Props
 
         {modules.length === 0 && (
           <div className="col-span-3 text-center py-12">
-            <GraduationCap size={32} className="mx-auto mb-3" style={{ color: "#5a5575" }} />
-            <p className="text-sm" style={{ color: "#5a5575" }}>Sin módulos de entrenamiento disponibles</p>
+            <GraduationCap size={32} className="mx-auto mb-3" style={{ color: "var(--color-text-muted)" }} />
+            <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>Sin módulos de entrenamiento disponibles</p>
           </div>
         )}
       </div>

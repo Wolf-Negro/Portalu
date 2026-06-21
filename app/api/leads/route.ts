@@ -10,17 +10,27 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
   const origin = searchParams.get("origin");
+  const page = Math.max(1, Number(searchParams.get("page")) || 1);
+  const pageSize = Math.min(200, Math.max(1, Number(searchParams.get("pageSize")) || 100));
 
-  const leads = await prisma.lead.findMany({
-    where: {
-      companyId,
-      ...(status ? { status } : {}),
-      ...(origin ? { origin } : {}),
-    },
-    include: { asesor: { select: { id: true, name: true } } },
-    orderBy: { createdAt: "desc" },
-  });
-  return NextResponse.json(leads);
+  const where = {
+    companyId,
+    ...(status ? { status } : {}),
+    ...(origin ? { origin } : {}),
+  };
+
+  const [leads, total] = await Promise.all([
+    prisma.lead.findMany({
+      where,
+      include: { asesor: { select: { id: true, name: true } } },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.lead.count({ where }),
+  ]);
+
+  return NextResponse.json({ leads, total, page, pageSize });
 }
 
 export async function POST(req: NextRequest) {

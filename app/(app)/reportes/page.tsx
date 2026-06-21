@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import ReportesClient from "./ReportesClient";
 
-async function getMonthlyData() {
+async function getMonthlyData(companyId: string | undefined) {
   const ranges = Array.from({ length: 6 }, (_, i) => {
     const date = new Date();
     date.setMonth(date.getMonth() - (5 - i));
@@ -16,9 +16,9 @@ async function getMonthlyData() {
   const results = await Promise.all(
     ranges.map(async ({ mes, start, end }) => {
       const [leadsCount, closedOpps, revenue] = await Promise.all([
-        prisma.lead.count({ where: { createdAt: { gte: start, lte: end } } }),
-        prisma.opportunity.count({ where: { stage: "cerrado_ganado", closedAt: { gte: start, lte: end } } }),
-        prisma.opportunity.aggregate({ _sum: { value: true }, where: { stage: "cerrado_ganado", closedAt: { gte: start, lte: end } } }),
+        prisma.lead.count({ where: { companyId, createdAt: { gte: start, lte: end } } }),
+        prisma.opportunity.count({ where: { companyId, stage: "cerrado_ganado", closedAt: { gte: start, lte: end } } }),
+        prisma.opportunity.aggregate({ _sum: { value: true }, where: { companyId, stage: "cerrado_ganado", closedAt: { gte: start, lte: end } } }),
       ]);
       return { mes, leads: leadsCount, ventas: closedOpps, ingresos: revenue._sum.value || 0 };
     })
@@ -36,7 +36,7 @@ export default async function ReportesPage() {
     prisma.opportunity.findMany({ where: { companyId } }),
     prisma.campaign.findMany({ where: { companyId } }),
     prisma.user.findMany({ where: { companyId }, select: { id: true, name: true, role: true } }),
-    getMonthlyData(),
+    getMonthlyData(companyId),
   ]);
 
   return (

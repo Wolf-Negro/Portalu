@@ -170,7 +170,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@demo.com"
+                placeholder="tu@empresa.com"
                 required
                 autoComplete="email"
                 className="w-full px-4 py-3 rounded-lg text-sm outline-none transition-all"
@@ -233,31 +233,6 @@ export default function LoginPage() {
               {loading ? "Ingresando..." : "Ingresar"}
             </button>
           </form>
-
-          {/* Demo credentials */}
-          <div className="mt-6 p-3.5 rounded-lg" style={{
-            background: "rgba(114,85,180,0.07)",
-            border: "1px solid rgba(114,85,180,0.18)",
-          }}>
-            <p className="text-xs font-semibold mb-2" style={{ color: "#7255b4" }}>Credenciales de demo:</p>
-            <div className="space-y-1">
-              {[
-                { role: "Admin",      email: "admin@demo.com" },
-                { role: "Supervisor", email: "supervisor@demo.com" },
-                { role: "Asesor",     email: "asesor@demo.com" },
-              ].map((c) => (
-                <button
-                  key={c.email}
-                  type="button"
-                  onClick={() => { setEmail(c.email); setPassword("portalu2025"); }}
-                  className="w-full text-left text-xs px-2 py-1 rounded transition-colors hover:bg-violet-500/10"
-                  style={{ color: "#a09bbf" }}
-                >
-                  <span style={{ color: "#7255b4" }}>{c.role}:</span> {c.email} / portalu2025
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         <p className="text-[11px] text-center" style={{ color: "rgba(90,85,117,0.75)" }}>

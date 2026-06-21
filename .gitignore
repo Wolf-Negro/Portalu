@@ -43,3 +43,10 @@ next-env.d.ts
 # database
 prisma/*.db
 prisma/*.db-journal
+
+# WhatsApp bot session credentials (NUNCA subir — son secretos de sesión activa)
+/auth/
+/auth.backup-*/
+
+# Herramienta externa no relacionada con Portalu, anidada por error
+/free-claude-code/

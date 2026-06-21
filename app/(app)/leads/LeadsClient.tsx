@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo, useTransition } from "react";
 import {
@@ -8,19 +8,19 @@ import {
 import { useRouter } from "next/navigation";
 
 const STATUS_CONFIG = {
-  nuevo:         { label: "Nuevo",          color: "#7255b4", bg: "rgba(114,85,180,0.15)" },
+  nuevo:         { label: "Nuevo",          color: "var(--color-lavender)", bg: "rgba(114,85,180,0.15)" },
   contactado:    { label: "Contactado",      color: "#3b82f6", bg: "rgba(59,130,246,0.15)" },
-  en_seguimiento:{ label: "En seguimiento",  color: "#f59e0b", bg: "rgba(245,158,11,0.15)" },
-  calificado:    { label: "Calificado",      color: "#22c55e", bg: "rgba(34,197,94,0.15)" },
-  descartado:    { label: "Descartado",      color: "#ef4444", bg: "rgba(239,68,68,0.15)" },
+  en_seguimiento:{ label: "En seguimiento",  color: "var(--color-warning)", bg: "rgba(245,158,11,0.15)" },
+  calificado:    { label: "Calificado",      color: "var(--color-success)", bg: "rgba(34,197,94,0.15)" },
+  descartado:    { label: "Descartado",      color: "var(--color-danger)", bg: "rgba(239,68,68,0.15)" },
 };
 
 const ORIGIN_CONFIG: Record<string, { label: string; color: string }> = {
-  meta_ads:  { label: "Meta Ads",    color: "#7255b4" },
-  whatsapp:  { label: "WhatsApp",    color: "#22c55e" },
+  meta_ads:  { label: "Meta Ads",    color: "var(--color-lavender)" },
+  whatsapp:  { label: "WhatsApp",    color: "var(--color-success)" },
   formulario:{ label: "Formulario",  color: "#3b82f6" },
-  landing:   { label: "Landing Page",color: "#fa7553" },
-  otros:     { label: "Otros",       color: "#a09bbf" },
+  landing:   { label: "Landing Page",color: "var(--color-coral)" },
+  otros:     { label: "Otros",       color: "var(--color-text-secondary)" },
 };
 
 function Badge({ type, value }: { type: "status" | "origin"; value: string }) {
@@ -60,42 +60,42 @@ function LeadDetailModal({ lead, onClose }: { lead: Lead; onClose: () => void })
     >
       <div
         className="w-full max-w-lg rounded-xl p-6 animate-slide-up"
-        style={{ background: "#1a1a2e", border: "1px solid rgba(114,85,180,0.3)" }}
+        style={{ background: "var(--color-surface-2)", border: "1px solid rgba(114,85,180,0.3)" }}
       >
         <div className="flex items-start justify-between mb-5">
           <div>
-            <h2 className="text-lg font-bold" style={{ color: "#e9e8e6" }}>{lead.name}</h2>
+            <h2 className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>{lead.name}</h2>
             <div className="flex items-center gap-2 mt-1.5">
               <Badge type="status" value={lead.status} />
               <Badge type="origin" value={lead.origin} />
             </div>
           </div>
-          <button onClick={onClose} className="p-1 rounded" style={{ color: "#5a5575" }}>
+          <button onClick={onClose} className="p-1 rounded" style={{ color: "var(--color-text-muted)" }}>
             <X size={16} />
           </button>
         </div>
 
         <div className="space-y-3 mb-5">
           {lead.phone && (
-            <div className="flex items-center gap-2 text-sm" style={{ color: "#a09bbf" }}>
-              <Phone size={14} style={{ color: "#7255b4" }} />
+            <div className="flex items-center gap-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+              <Phone size={14} style={{ color: "var(--color-lavender)" }} />
               {lead.phone}
             </div>
           )}
           {lead.email && (
-            <div className="flex items-center gap-2 text-sm" style={{ color: "#a09bbf" }}>
-              <Mail size={14} style={{ color: "#7255b4" }} />
+            <div className="flex items-center gap-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+              <Mail size={14} style={{ color: "var(--color-lavender)" }} />
               {lead.email}
             </div>
           )}
-          <div className="flex items-center gap-2 text-sm" style={{ color: "#a09bbf" }}>
-            <Calendar size={14} style={{ color: "#7255b4" }} />
+          <div className="flex items-center gap-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+            <Calendar size={14} style={{ color: "var(--color-lavender)" }} />
             Creado: {new Date(lead.createdAt).toLocaleDateString("es-PE")}
           </div>
           {lead.asesor && (
-            <div className="flex items-center gap-2 text-sm" style={{ color: "#a09bbf" }}>
-              <User size={14} style={{ color: "#7255b4" }} />
-              Asesor: <span style={{ color: "#e9e8e6" }}>{lead.asesor.name}</span>
+            <div className="flex items-center gap-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+              <User size={14} style={{ color: "var(--color-lavender)" }} />
+              Asesor: <span style={{ color: "var(--color-text-primary)" }}>{lead.asesor.name}</span>
             </div>
           )}
         </div>
@@ -103,8 +103,8 @@ function LeadDetailModal({ lead, onClose }: { lead: Lead; onClose: () => void })
         {lead.notes && (
           <div className="p-3 rounded-lg mb-4"
             style={{ background: "rgba(43,9,111,0.2)", border: "1px solid rgba(114,85,180,0.2)" }}>
-            <p className="text-xs font-medium mb-1" style={{ color: "#7255b4" }}>Notas</p>
-            <p className="text-sm" style={{ color: "#a09bbf" }}>{lead.notes}</p>
+            <p className="text-xs font-medium mb-1" style={{ color: "var(--color-lavender)" }}>Notas</p>
+            <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>{lead.notes}</p>
           </div>
         )}
 
@@ -115,14 +115,14 @@ function LeadDetailModal({ lead, onClose }: { lead: Lead; onClose: () => void })
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 py-2 rounded-lg text-sm font-medium text-center transition-all"
-              style={{ background: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" }}
+              style={{ background: "rgba(34,197,94,0.15)", color: "var(--color-success)", border: "1px solid rgba(34,197,94,0.3)" }}
             >
               WhatsApp
             </a>
           )}
           <button onClick={onClose}
             className="flex-1 py-2 rounded-lg text-sm font-medium"
-            style={{ background: "rgba(114,85,180,0.15)", color: "#7255b4", border: "1px solid rgba(114,85,180,0.3)" }}>
+            style={{ background: "rgba(114,85,180,0.15)", color: "var(--color-lavender)", border: "1px solid rgba(114,85,180,0.3)" }}>
             Cerrar
           </button>
         </div>
@@ -170,9 +170,9 @@ function CreateLeadModal({ users, onClose, onCreated }: CreateLeadModalProps) {
   }
 
   const inputStyle = {
-    background: "rgba(22,22,42,0.8)",
+    background: "var(--color-surface-glass)",
     border: "1px solid rgba(114,85,180,0.25)",
-    color: "#e9e8e6",
+    color: "var(--color-text-primary)",
   };
 
   return (
@@ -180,16 +180,16 @@ function CreateLeadModal({ users, onClose, onCreated }: CreateLeadModalProps) {
       style={{ background: "rgba(0,0,0,0.75)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="w-full max-w-md rounded-xl animate-slide-up"
-        style={{ background: "#1a1a2e", border: "1px solid rgba(114,85,180,0.3)" }}>
+        style={{ background: "var(--color-surface-2)", border: "1px solid rgba(114,85,180,0.3)" }}>
         <div className="flex items-center justify-between p-5"
           style={{ borderBottom: "1px solid rgba(114,85,180,0.15)" }}>
-          <h2 className="font-bold" style={{ color: "#e9e8e6" }}>Nuevo Lead</h2>
-          <button onClick={onClose} style={{ color: "#5a5575" }}><X size={16} /></button>
+          <h2 className="font-bold" style={{ color: "var(--color-text-primary)" }}>Nuevo Lead</h2>
+          <button onClick={onClose} style={{ color: "var(--color-text-muted)" }}><X size={16} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "#a09bbf" }}>
+            <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>
               Nombre *
             </label>
             <input
@@ -203,7 +203,7 @@ function CreateLeadModal({ users, onClose, onCreated }: CreateLeadModalProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "#a09bbf" }}>Teléfono</label>
+              <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Teléfono</label>
               <input
                 value={form.phone}
                 onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
@@ -213,7 +213,7 @@ function CreateLeadModal({ users, onClose, onCreated }: CreateLeadModalProps) {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "#a09bbf" }}>Email</label>
+              <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Email</label>
               <input
                 type="email"
                 value={form.email}
@@ -227,7 +227,7 @@ function CreateLeadModal({ users, onClose, onCreated }: CreateLeadModalProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "#a09bbf" }}>Origen</label>
+              <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Origen</label>
               <select
                 value={form.origin}
                 onChange={(e) => setForm(f => ({ ...f, origin: e.target.value }))}
@@ -240,7 +240,7 @@ function CreateLeadModal({ users, onClose, onCreated }: CreateLeadModalProps) {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "#a09bbf" }}>Estado</label>
+              <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Estado</label>
               <select
                 value={form.status}
                 onChange={(e) => setForm(f => ({ ...f, status: e.target.value }))}
@@ -255,7 +255,7 @@ function CreateLeadModal({ users, onClose, onCreated }: CreateLeadModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "#a09bbf" }}>Asesor</label>
+            <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Asesor</label>
             <select
               value={form.asesorId}
               onChange={(e) => setForm(f => ({ ...f, asesorId: e.target.value }))}
@@ -270,7 +270,7 @@ function CreateLeadModal({ users, onClose, onCreated }: CreateLeadModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "#a09bbf" }}>Notas</label>
+            <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Notas</label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))}
@@ -291,14 +291,14 @@ function CreateLeadModal({ users, onClose, onCreated }: CreateLeadModalProps) {
           <div className="flex gap-2 pt-1">
             <button type="button" onClick={onClose}
               className="flex-1 py-2.5 rounded-lg text-sm"
-              style={{ background: "rgba(90,85,117,0.15)", border: "1px solid rgba(90,85,117,0.3)", color: "#a09bbf" }}>
+              style={{ background: "rgba(90,85,117,0.15)", border: "1px solid rgba(90,85,117,0.3)", color: "var(--color-text-secondary)" }}>
               Cancelar
             </button>
             <button type="submit" disabled={loading}
               className="flex-1 py-2.5 rounded-lg text-sm font-semibold"
               style={{
-                background: loading ? "rgba(114,85,180,0.4)" : "linear-gradient(135deg, #2b096f, #7255b4)",
-                color: "#e9e8e6",
+                background: loading ? "rgba(114,85,180,0.4)" : "linear-gradient(135deg, var(--color-violet-dim), var(--color-lavender))",
+                color: "var(--color-text-primary)",
                 cursor: loading ? "not-allowed" : "pointer",
               }}>
               {loading ? "Creando..." : "Crear lead"}
@@ -310,20 +310,156 @@ function CreateLeadModal({ users, onClose, onCreated }: CreateLeadModalProps) {
   );
 }
 
+function EditLeadModal({ lead, users, onClose, onUpdated }: {
+  lead: Lead;
+  users: { id: string; name: string | null }[];
+  onClose: () => void;
+  onUpdated: (lead: Lead) => void;
+}) {
+  const [form, setForm] = useState({
+    name: lead.name, phone: lead.phone || "", email: lead.email || "",
+    origin: lead.origin, status: lead.status, notes: lead.notes || "",
+    asesorId: lead.asesorId || "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState("");
+
+  const inputStyle = { background: "var(--color-surface-glass)", border: "1px solid rgba(114,85,180,0.25)", color: "var(--color-text-primary)" };
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.name.trim()) { setError("El nombre es obligatorio."); return; }
+    setLoading(true); setError("");
+    try {
+      const res = await fetch(`/api/leads/${lead.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, asesorId: form.asesorId || null }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      onUpdated(updated);
+    } catch {
+      setError("Error al actualizar. Intenta de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.75)" }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="w-full max-w-md rounded-xl animate-slide-up"
+        style={{ background: "var(--color-surface-2)", border: "1px solid rgba(114,85,180,0.3)" }}>
+        <div className="flex items-center justify-between p-5"
+          style={{ borderBottom: "1px solid rgba(114,85,180,0.15)" }}>
+          <h2 className="font-bold" style={{ color: "var(--color-text-primary)" }}>Editar Lead</h2>
+          <button onClick={onClose} style={{ color: "var(--color-text-muted)" }}><X size={16} /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          <div>
+            <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Nombre *</label>
+            <input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
+              className="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style={inputStyle} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Teléfono</label>
+              <input value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style={inputStyle} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Email</label>
+              <input type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style={inputStyle} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Origen</label>
+              <select value={form.origin} onChange={(e) => setForm(f => ({ ...f, origin: e.target.value }))}
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style={inputStyle}>
+                {Object.entries(ORIGIN_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Estado</label>
+              <select value={form.status} onChange={(e) => setForm(f => ({ ...f, status: e.target.value }))}
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style={inputStyle}>
+                {Object.entries(STATUS_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Asesor</label>
+            <select value={form.asesorId} onChange={(e) => setForm(f => ({ ...f, asesorId: e.target.value }))}
+              className="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style={inputStyle}>
+              <option value="">Sin asignar</option>
+              {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Notas</label>
+            <textarea value={form.notes} onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))}
+              rows={2} className="w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-none" style={inputStyle} />
+          </div>
+          {error && <p className="text-xs px-3 py-2 rounded-lg"
+            style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#fca5a5" }}>{error}</p>}
+          <div className="flex gap-2 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 rounded-lg text-sm"
+              style={{ background: "rgba(90,85,117,0.15)", border: "1px solid rgba(90,85,117,0.3)", color: "var(--color-text-secondary)" }}>
+              Cancelar
+            </button>
+            <button type="submit" disabled={loading}
+              className="flex-1 py-2.5 rounded-lg text-sm font-semibold"
+              style={{ background: loading ? "rgba(114,85,180,0.4)" : "linear-gradient(135deg, var(--color-violet-dim), var(--color-lavender))", color: "var(--color-text-primary)" }}>
+              {loading ? "Guardando..." : "Guardar cambios"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   leads: Lead[];
+  total: number;
+  pageSize: number;
   users: { id: string; name: string | null; role: string }[];
   companyId: string;
 }
 
-export default function LeadsClient({ leads: initialLeads, users, companyId }: Props) {
+export default function LeadsClient({ leads: initialLeads, total, pageSize, users, companyId }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const hasMore = leads.length < total;
+
+  async function loadMore() {
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const res = await fetch(`/api/leads?page=${nextPage}&pageSize=${pageSize}`);
+      if (!res.ok) throw new Error("Error al cargar más leads");
+      const data = await res.json();
+      setLeads((prev) => [...prev, ...data.leads]);
+      setPage(nextPage);
+    } catch {
+      // silently ignore, user can retry
+    } finally {
+      setLoadingMore(false);
+    }
+  }
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterOrigin, setFilterOrigin] = useState("");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [editLead,     setEditLead]     = useState<Lead | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -394,14 +530,25 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
   }
 
   const inputStyle = {
-    background: "rgba(22,22,42,0.8)",
+    background: "var(--color-surface-glass)",
     border: "1px solid rgba(114,85,180,0.2)",
-    color: "#e9e8e6",
+    color: "var(--color-text-primary)",
   } as React.CSSProperties;
 
   return (
     <div className="p-6 space-y-5 animate-fade-in">
       {selectedLead && <LeadDetailModal lead={selectedLead} onClose={() => setSelectedLead(null)} />}
+      {editLead && (
+        <EditLeadModal
+          lead={editLead}
+          users={users}
+          onClose={() => setEditLead(null)}
+          onUpdated={(updated) => {
+            setLeads((prev) => prev.map((l) => l.id === updated.id ? { ...l, ...updated } : l));
+            setEditLead(null);
+          }}
+        />
+      )}
       {showCreateModal && (
         <CreateLeadModal
           users={users}
@@ -416,13 +563,13 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: "rgba(0,0,0,0.75)" }}>
           <div className="w-80 rounded-xl p-6"
-            style={{ background: "#1a1a2e", border: "1px solid rgba(239,68,68,0.3)" }}>
-            <p className="text-sm font-semibold mb-2" style={{ color: "#e9e8e6" }}>¿Eliminar lead?</p>
-            <p className="text-xs mb-5" style={{ color: "#a09bbf" }}>Esta acción no se puede deshacer.</p>
+            style={{ background: "var(--color-surface-2)", border: "1px solid rgba(239,68,68,0.3)" }}>
+            <p className="text-sm font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>¿Eliminar lead?</p>
+            <p className="text-xs mb-5" style={{ color: "var(--color-text-secondary)" }}>Esta acción no se puede deshacer.</p>
             <div className="flex gap-2">
               <button onClick={() => setDeleteConfirm(null)}
                 className="flex-1 py-2 rounded-lg text-sm"
-                style={{ background: "rgba(90,85,117,0.15)", border: "1px solid rgba(90,85,117,0.3)", color: "#a09bbf" }}>
+                style={{ background: "rgba(90,85,117,0.15)", border: "1px solid rgba(90,85,117,0.3)", color: "var(--color-text-secondary)" }}>
                 Cancelar
               </button>
               <button onClick={() => handleDelete(deleteConfirm)}
@@ -438,8 +585,8 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "#e9e8e6" }}>Leads</h1>
-          <p className="text-sm mt-0.5" style={{ color: "#a09bbf" }}>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>Leads</h1>
+          <p className="text-sm mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
             {filtered.length} de {leads.length} leads
           </p>
         </div>
@@ -447,8 +594,8 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
           onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
           style={{
-            background: "linear-gradient(135deg, #2b096f 0%, #7255b4 100%)",
-            color: "#e9e8e6",
+            background: "linear-gradient(135deg, var(--color-violet-dim) 0%, var(--color-lavender) 100%)",
+            color: "var(--color-text-primary)",
             boxShadow: "0 4px 16px rgba(43,9,111,0.4)",
           }}
         >
@@ -460,7 +607,7 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
       {/* Filters row */}
       <div className="flex flex-wrap gap-3">
         <div className="flex-1 min-w-48 relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#5a5575" }} />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--color-text-muted)" }} />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -497,7 +644,7 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
         {selected.size > 0 && (
           <div className="flex items-center gap-2">
             <span className="text-xs px-2 py-1.5 rounded-lg"
-              style={{ background: "rgba(114,85,180,0.15)", color: "#7255b4" }}>
+              style={{ background: "rgba(114,85,180,0.15)", color: "var(--color-lavender)" }}>
               {selected.size} sel.
             </span>
             <select
@@ -514,7 +661,7 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
             <button
               onClick={() => setSelected(new Set())}
               className="p-1.5 rounded"
-              style={{ color: "#5a5575" }}
+              style={{ color: "var(--color-text-muted)" }}
             >
               <X size={12} />
             </button>
@@ -524,7 +671,7 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
         <button
           onClick={exportCSV}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
-          style={{ background: "rgba(22,22,42,0.8)", border: "1px solid rgba(114,85,180,0.2)", color: "#a09bbf" }}
+          style={{ background: "var(--color-surface-glass)", border: "1px solid rgba(114,85,180,0.2)", color: "var(--color-text-secondary)" }}
         >
           <Download size={14} />
           CSV
@@ -533,7 +680,7 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
 
       {/* Table */}
       <div className="rounded-xl overflow-hidden"
-        style={{ background: "rgba(22,22,42,0.8)", border: "1px solid rgba(114,85,180,0.18)" }}>
+        style={{ background: "var(--color-surface-glass)", border: "1px solid rgba(114,85,180,0.18)" }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -551,7 +698,7 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
                 </th>
                 {["Nombre", "Teléfono", "Email", "Origen", "Estado", "Asesor", "Fecha", ""].map((h) => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider"
-                    style={{ color: "#5a5575" }}>
+                    style={{ color: "var(--color-text-muted)" }}>
                     {h}
                   </th>
                 ))}
@@ -578,22 +725,22 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
-                        style={{ background: "linear-gradient(135deg, #2b096f, #7255b4)", color: "#e9e8e6" }}>
+                        style={{ background: "linear-gradient(135deg, var(--color-violet-dim), var(--color-lavender))", color: "var(--color-text-primary)" }}>
                         {lead.name.charAt(0).toUpperCase()}
                       </div>
-                      <span className="font-medium" style={{ color: "#e9e8e6" }}>{lead.name}</span>
+                      <span className="font-medium" style={{ color: "var(--color-text-primary)" }}>{lead.name}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3.5" style={{ color: "#a09bbf" }}>{lead.phone || "—"}</td>
-                  <td className="px-4 py-3.5 max-w-[160px] truncate" style={{ color: "#a09bbf" }}>
+                  <td className="px-4 py-3.5" style={{ color: "var(--color-text-secondary)" }}>{lead.phone || "—"}</td>
+                  <td className="px-4 py-3.5 max-w-[160px] truncate" style={{ color: "var(--color-text-secondary)" }}>
                     {lead.email || "—"}
                   </td>
                   <td className="px-4 py-3.5"><Badge type="origin" value={lead.origin} /></td>
                   <td className="px-4 py-3.5"><Badge type="status" value={lead.status} /></td>
-                  <td className="px-4 py-3.5" style={{ color: "#a09bbf" }}>
-                    {lead.asesor?.name || <span style={{ color: "#5a5575" }}>Sin asignar</span>}
+                  <td className="px-4 py-3.5" style={{ color: "var(--color-text-secondary)" }}>
+                    {lead.asesor?.name || <span style={{ color: "var(--color-text-muted)" }}>Sin asignar</span>}
                   </td>
-                  <td className="px-4 py-3.5 text-xs" style={{ color: "#5a5575" }}>
+                  <td className="px-4 py-3.5 text-xs" style={{ color: "var(--color-text-muted)" }}>
                     {new Date(lead.createdAt).toLocaleDateString("es-PE")}
                   </td>
                   <td className="px-4 py-3.5">
@@ -601,14 +748,15 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
                       <button
                         onClick={() => setSelectedLead(lead)}
                         className="p-1.5 rounded-md transition-colors hover:bg-violet-500/10"
-                        style={{ color: "#7255b4" }}
+                        style={{ color: "var(--color-lavender)" }}
                         title="Ver detalle"
                       >
                         <Eye size={14} />
                       </button>
                       <button
+                        onClick={() => setEditLead(lead)}
                         className="p-1.5 rounded-md transition-colors hover:bg-white/5"
-                        style={{ color: "#a09bbf" }}
+                        style={{ color: "var(--color-text-secondary)" }}
                         title="Editar"
                       >
                         <Pencil size={14} />
@@ -616,7 +764,7 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
                       <button
                         onClick={() => setDeleteConfirm(lead.id)}
                         className="p-1.5 rounded-md transition-colors hover:bg-red-500/10"
-                        style={{ color: "#ef4444" }}
+                        style={{ color: "var(--color-danger)" }}
                         title="Eliminar"
                       >
                         <Trash2 size={14} />
@@ -631,9 +779,9 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
                     <div className="flex flex-col items-center gap-2">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(114,85,180,0.1)", border: "1px solid rgba(114,85,180,0.2)" }}>
-                        <Search size={16} style={{ color: "#5a5575" }} />
+                        <Search size={16} style={{ color: "var(--color-text-muted)" }} />
                       </div>
-                      <p className="text-sm" style={{ color: "#5a5575" }}>No se encontraron leads con los filtros actuales</p>
+                      <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>No se encontraron leads con los filtros actuales</p>
                     </div>
                   </td>
                 </tr>
@@ -642,6 +790,19 @@ export default function LeadsClient({ leads: initialLeads, users, companyId }: P
           </table>
         </div>
       </div>
+
+      {hasMore && (
+        <div className="flex justify-center">
+          <button
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+            style={{ background: "rgba(114,85,180,0.15)", color: "var(--color-lavender)", border: "1px solid rgba(114,85,180,0.3)" }}
+          >
+            {loadingMore ? "Cargando..." : `Cargar más (${leads.length} de ${total})`}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

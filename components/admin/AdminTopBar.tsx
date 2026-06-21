@@ -3,7 +3,8 @@
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Building2, Shield } from "lucide-react";
+import { LogOut, Building2, Shield, Settings2 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 interface Props {
   user: { name: string; email: string };
@@ -15,7 +16,7 @@ export default function AdminTopBar({ user }: Props) {
   return (
     <div
       style={{
-        background: "linear-gradient(90deg, #0d0d20 0%, #100c28 100%)",
+        background: "linear-gradient(90deg, var(--color-surface-1) 0%, var(--color-surface-2) 100%)",
         borderBottom: "1px solid rgba(250,117,83,0.2)",
         position: "sticky",
         top: 0,
@@ -42,7 +43,7 @@ export default function AdminTopBar({ user }: Props) {
                 width: 28,
                 height: 28,
                 borderRadius: 8,
-                background: "linear-gradient(135deg, #fa7553, #c0442a)",
+                background: "linear-gradient(135deg, var(--color-coral), #c0442a)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -51,15 +52,15 @@ export default function AdminTopBar({ user }: Props) {
               <Shield size={14} color="#fff" />
             </div>
             <div>
-              <span style={{ fontSize: 13, fontWeight: 800, color: "#e9e8e6", letterSpacing: "-0.02em" }}>
-                PORT<span style={{ color: "#fa7553" }}>.</span>ALU
+              <span style={{ fontSize: 13, fontWeight: 800, color: "var(--color-text-primary)", letterSpacing: "-0.02em" }}>
+                PORT<span style={{ color: "var(--color-coral)" }}>.</span>ALU
               </span>
               <span
                 style={{
                   marginLeft: 6,
                   fontSize: 9,
                   fontWeight: 700,
-                  color: "#fa7553",
+                  color: "var(--color-coral)",
                   letterSpacing: "0.1em",
                   textTransform: "uppercase",
                   background: "rgba(250,117,83,0.12)",
@@ -85,7 +86,7 @@ export default function AdminTopBar({ user }: Props) {
                 borderRadius: 6,
                 fontSize: 12.5,
                 fontWeight: 500,
-                color: pathname === "/admin" ? "#e9e8e6" : "#7a7590",
+                color: pathname === "/admin" ? "var(--color-text-primary)" : "var(--color-text-faint)",
                 background: pathname === "/admin" ? "rgba(255,255,255,0.06)" : "transparent",
                 textDecoration: "none",
                 transition: "color 0.15s, background 0.15s",
@@ -94,14 +95,34 @@ export default function AdminTopBar({ user }: Props) {
               <Building2 size={13} />
               Clientes
             </Link>
+            <Link
+              href="/admin/config"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "5px 10px",
+                borderRadius: 6,
+                fontSize: 12.5,
+                fontWeight: 500,
+                color: pathname === "/admin/config" ? "var(--color-text-primary)" : "var(--color-text-faint)",
+                background: pathname === "/admin/config" ? "rgba(255,255,255,0.06)" : "transparent",
+                textDecoration: "none",
+                transition: "color 0.15s, background 0.15s",
+              }}
+            >
+              <Settings2 size={13} />
+              Config. Global
+            </Link>
           </nav>
         </div>
 
         {/* Right */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <ThemeToggle size={28} />
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "#e9e8e6" }}>{user.name}</div>
-            <div style={{ fontSize: 10, color: "#5a5575" }}>{user.email}</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-primary)" }}>{user.name}</div>
+            <div style={{ fontSize: 10, color: "var(--color-text-muted)" }}>{user.email}</div>
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
@@ -114,12 +135,12 @@ export default function AdminTopBar({ user }: Props) {
               border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: 6,
               fontSize: 12,
-              color: "#7a7590",
+              color: "var(--color-text-faint)",
               cursor: "pointer",
               transition: "color 0.15s",
             }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#e9e8e6")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "#7a7590")}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--color-text-primary)")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--color-text-faint)")}
           >
             <LogOut size={12} />
             Salir

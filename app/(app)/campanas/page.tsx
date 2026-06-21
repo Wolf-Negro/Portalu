@@ -1,13 +1,18 @@
 import { auth } from "@/auth";
+import { getMetaCredentials } from "@/lib/meta-credentials";
 import CampanasClient from "./CampanasClient";
 
 export const dynamic = "force-dynamic";
 
-async function fetchMetaCampaigns(): Promise<{ campaigns: any[]; error?: string }> {
-  const token = process.env.META_ACCESS_TOKEN;
-  const account = process.env.META_AD_ACCOUNT_ID;
+async function fetchMetaCampaigns(companyId: string | undefined): Promise<{ campaigns: any[]; error?: string }> {
+  const { token, account: rawAccount } = await getMetaCredentials(companyId);
 
-  if (!token || token.startsWith("EAA...") || !account || account.startsWith("act_...")) {
+  // Meta API requires act_ prefix on ad account IDs
+  const account = rawAccount
+    ? rawAccount.startsWith("act_") ? rawAccount : `act_${rawAccount}`
+    : null;
+
+  if (!token || !account) {
     return { campaigns: [], error: "Configura META_ACCESS_TOKEN y META_AD_ACCOUNT_ID" };
   }
 
@@ -77,7 +82,8 @@ async function fetchMetaCampaigns(): Promise<{ campaigns: any[]; error?: string 
 }
 
 export default async function CampanasPage() {
-  await auth();
-  const { campaigns, error } = await fetchMetaCampaigns();
+  const session = await auth();
+  const companyId = (session?.user as any)?.companyId as string | undefined;
+  const { campaigns, error } = await fetchMetaCampaigns(companyId);
   return <CampanasClient campaigns={campaigns} metaError={error} />;
 }

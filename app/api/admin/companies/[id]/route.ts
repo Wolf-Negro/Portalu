@@ -30,6 +30,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
       phone: company.phone,
       plan: (company as any).plan ?? "starter",
       active: (company as any).active ?? true,
+      logo: (company as any).logo ?? null,
       metaAdAccountId: (company as any).metaAdAccountId ?? null,
       hasOwnToken: !!((company as any).metaAccessToken),
       users: company.users,

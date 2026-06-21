@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, UserPlus, Trash2, CheckCircle2, XCircle, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Loader2, UserPlus, CheckCircle2, XCircle, Eye, EyeOff, ImagePlus, Building2 } from "lucide-react";
 
 const INPUT_STYLE: React.CSSProperties = {
   width: "100%",
@@ -12,7 +12,7 @@ const INPUT_STYLE: React.CSSProperties = {
   border: "1px solid rgba(114,85,180,0.2)",
   borderRadius: 7,
   fontSize: 13.5,
-  color: "#e9e8e6",
+  color: "var(--color-text-primary)",
   outline: "none",
   boxSizing: "border-box",
 };
@@ -20,7 +20,7 @@ const INPUT_STYLE: React.CSSProperties = {
 const LABEL_STYLE: React.CSSProperties = {
   fontSize: 12,
   fontWeight: 600,
-  color: "#7a7590",
+  color: "var(--color-text-faint)",
   letterSpacing: "0.04em",
   textTransform: "uppercase",
   display: "block",
@@ -28,7 +28,7 @@ const LABEL_STYLE: React.CSSProperties = {
 };
 
 const SECTION_STYLE: React.CSSProperties = {
-  background: "rgba(14,14,28,0.7)",
+  background: "var(--color-surface-glass)",
   border: "1px solid rgba(114,85,180,0.14)",
   borderRadius: 12,
   padding: 24,
@@ -51,6 +51,7 @@ interface CompanyDetail {
   phone: string | null;
   plan: string;
   active: boolean;
+  logo: string | null;
   metaAdAccountId: string | null;
   hasOwnToken: boolean;
   users: { id: string; name: string; email: string; role: string; createdAt: string }[];
@@ -73,6 +74,8 @@ export default function EditCompanyPage() {
   const [useOwnToken, setUseOwnToken] = useState(false);
   const [newToken, setNewToken] = useState("");
   const [showToken, setShowToken] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   // New user form
   const [showUserForm, setShowUserForm] = useState(false);
@@ -102,12 +105,32 @@ export default function EditCompanyPage() {
           metaAdAccountId: c.metaAdAccountId || "",
         });
         setUseOwnToken(c.hasOwnToken);
+        setLogoPreview(c.logo || null);
         setLoading(false);
       });
   }, [id]);
 
   function set(key: string, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    const fd = new FormData();
+    fd.append("logo", file);
+    const res = await fetch(`/api/admin/companies/${id}/logo`, { method: "POST", body: fd });
+    const data = await res.json();
+    setUploadingLogo(false);
+    if (res.ok) {
+      setLogoPreview(data.logoUrl + "?t=" + Date.now());
+      setSuccess("Logo actualizado");
+      setTimeout(() => setSuccess(""), 3000);
+    } else {
+      setError(data.error || "Error al subir logo");
+    }
+    e.target.value = "";
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -167,7 +190,7 @@ export default function EditCompanyPage() {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 0", gap: 10, color: "#5a5575" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 0", gap: 10, color: "var(--color-text-muted)" }}>
         <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />
         Cargando...
       </div>
@@ -178,14 +201,14 @@ export default function EditCompanyPage() {
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto" }}>
-      <Link href="/admin" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "#7a7590", textDecoration: "none", marginBottom: 24 }}>
+      <Link href="/admin" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--color-text-faint)", textDecoration: "none", marginBottom: 24 }}>
         <ArrowLeft size={14} /> Volver a clientes
       </Link>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#e9e8e6", margin: 0, letterSpacing: "-0.03em" }}>{company.name}</h1>
-          <p style={{ fontSize: 13, color: "#5a5575", margin: "4px 0 0" }}>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--color-text-primary)", margin: 0, letterSpacing: "-0.03em" }}>{company.name}</h1>
+          <p style={{ fontSize: 13, color: "var(--color-text-muted)", margin: "4px 0 0" }}>
             {company.leadCount} leads · {company.opportunityCount} oportunidades
           </p>
         </div>
@@ -210,10 +233,30 @@ export default function EditCompanyPage() {
         </button>
       </div>
 
+      {/* ── Logo ── */}
+      <div style={{ ...SECTION_STYLE, display: "flex", alignItems: "center", gap: 20 }}>
+        <div style={{ width: 72, height: 72, borderRadius: 14, background: "var(--color-violet-dim)", border: "1px solid rgba(114,85,180,0.2)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+          {logoPreview ? (
+            <img src={logoPreview} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          ) : (
+            <Building2 size={28} color="#3a3550" />
+          )}
+        </div>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-primary)", marginBottom: 4 }}>Logo de la empresa</div>
+          <div style={{ fontSize: 11.5, color: "var(--color-text-muted)", marginBottom: 10 }}>PNG, JPG, SVG o WEBP · Máx. 2MB</div>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "rgba(114,85,180,0.1)", border: "1px solid rgba(114,85,180,0.25)", borderRadius: 7, fontSize: 12, fontWeight: 600, color: "var(--color-violet-soft)", cursor: "pointer" }}>
+            {uploadingLogo ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <ImagePlus size={12} />}
+            {uploadingLogo ? "Subiendo..." : "Subir logo"}
+            <input type="file" accept="image/*" onChange={handleLogoUpload} style={{ display: "none" }} disabled={uploadingLogo} />
+          </label>
+        </div>
+      </div>
+
       <form onSubmit={handleSave}>
         {/* ── Empresa ── */}
         <div style={SECTION_STYLE}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#fa7553", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 18 }}>Empresa</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--color-coral)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 18 }}>Empresa</div>
 
           <Field label="Nombre *">
             <input style={INPUT_STYLE} value={form.name} onChange={(e) => set("name", e.target.value)} required />
@@ -237,7 +280,7 @@ export default function EditCompanyPage() {
 
         {/* ── Meta Ads ── */}
         <div style={SECTION_STYLE}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#fa7553", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 18 }}>Meta Ads</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--color-coral)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 18 }}>Meta Ads</div>
 
           <div style={{ marginBottom: 18 }}>
             <label style={LABEL_STYLE}>Tipo de acceso</label>
@@ -260,10 +303,10 @@ export default function EditCompanyPage() {
                     cursor: "pointer",
                     fontSize: 12.5,
                     fontWeight: 500,
-                    color: useOwnToken === opt.value ? "#c4bcde" : "#7a7590",
+                    color: useOwnToken === opt.value ? "#c4bcde" : "var(--color-text-faint)",
                   }}
                 >
-                  <input type="radio" checked={useOwnToken === opt.value} onChange={() => setUseOwnToken(opt.value)} style={{ accentColor: "#7255b4" }} />
+                  <input type="radio" checked={useOwnToken === opt.value} onChange={() => setUseOwnToken(opt.value)} style={{ accentColor: "var(--color-lavender)" }} />
                   {opt.label}
                 </label>
               ))}
@@ -289,7 +332,7 @@ export default function EditCompanyPage() {
                   onChange={(e) => setNewToken(e.target.value)}
                   placeholder={company.hasOwnToken ? "••••••••••••••••••" : "EAAxxxxxxxxxxxxxxx..."}
                 />
-                <button type="button" onClick={() => setShowToken(!showToken)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#5a5575", cursor: "pointer" }}>
+                <button type="button" onClick={() => setShowToken(!showToken)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--color-text-muted)", cursor: "pointer" }}>
                   {showToken ? <EyeOff size={13} /> : <Eye size={13} />}
                 </button>
               </div>
@@ -315,7 +358,7 @@ export default function EditCompanyPage() {
             style={{
               display: "flex", alignItems: "center", gap: 8,
               padding: "10px 24px",
-              background: saving ? "rgba(43,9,111,0.4)" : "linear-gradient(135deg, #2b096f, #7255b4)",
+              background: saving ? "rgba(43,9,111,0.4)" : "linear-gradient(135deg, var(--color-violet-dim), var(--color-lavender))",
               border: "none", borderRadius: 7, fontSize: 13.5, fontWeight: 600, color: "#fff",
               cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1,
             }}
@@ -329,7 +372,7 @@ export default function EditCompanyPage() {
       {/* ── Usuarios ── */}
       <div style={SECTION_STYLE}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#fa7553", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--color-coral)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
             Usuarios ({company.users.length})
           </div>
           <button
@@ -339,7 +382,7 @@ export default function EditCompanyPage() {
               padding: "6px 12px",
               background: showUserForm ? "rgba(114,85,180,0.2)" : "rgba(114,85,180,0.08)",
               border: "1px solid rgba(114,85,180,0.25)",
-              borderRadius: 6, fontSize: 12, fontWeight: 600, color: "#9b82d4", cursor: "pointer",
+              borderRadius: 6, fontSize: 12, fontWeight: 600, color: "var(--color-violet-soft)", cursor: "pointer",
             }}
           >
             <UserPlus size={12} />
@@ -363,7 +406,7 @@ export default function EditCompanyPage() {
                 <label style={LABEL_STYLE}>Contraseña *</label>
                 <div style={{ position: "relative" }}>
                   <input style={{ ...INPUT_STYLE, paddingRight: 34 }} type={showNewPass ? "text" : "password"} value={newUser.password} onChange={(e) => setNewUser((p) => ({ ...p, password: e.target.value }))} required minLength={8} placeholder="mínimo 8 caracteres" />
-                  <button type="button" onClick={() => setShowNewPass(!showNewPass)} style={{ position: "absolute", right: 9, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#5a5575", cursor: "pointer" }}>
+                  <button type="button" onClick={() => setShowNewPass(!showNewPass)} style={{ position: "absolute", right: 9, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--color-text-muted)", cursor: "pointer" }}>
                     {showNewPass ? <EyeOff size={13} /> : <Eye size={13} />}
                   </button>
                 </div>
@@ -378,8 +421,8 @@ export default function EditCompanyPage() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <button type="button" onClick={() => setShowUserForm(false)} style={{ padding: "7px 14px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, fontSize: 12.5, color: "#7a7590", cursor: "pointer" }}>Cancelar</button>
-              <button type="submit" disabled={addingUser} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 16px", background: "linear-gradient(135deg, #2b096f, #7255b4)", border: "none", borderRadius: 6, fontSize: 12.5, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
+              <button type="button" onClick={() => setShowUserForm(false)} style={{ padding: "7px 14px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, fontSize: 12.5, color: "var(--color-text-faint)", cursor: "pointer" }}>Cancelar</button>
+              <button type="submit" disabled={addingUser} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 16px", background: "linear-gradient(135deg, var(--color-violet-dim), var(--color-lavender))", border: "none", borderRadius: 6, fontSize: 12.5, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
                 {addingUser && <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />}
                 {addingUser ? "Creando..." : "Crear usuario"}
               </button>
@@ -392,17 +435,17 @@ export default function EditCompanyPage() {
           {company.users.map((u) => (
             <div key={u.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", background: "rgba(255,255,255,0.02)", borderRadius: 8, border: "1px solid rgba(114,85,180,0.08)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg, #2b096f, #7255b4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
+                <div style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg, var(--color-violet-dim), var(--color-lavender))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
                   {u.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#e9e8e6" }}>{u.name}</div>
-                  <div style={{ fontSize: 11.5, color: "#5a5575" }}>{u.email}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-primary)" }}>{u.name}</div>
+                  <div style={{ fontSize: 11.5, color: "var(--color-text-muted)" }}>{u.email}</div>
                 </div>
               </div>
               <span style={{
                 fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 20,
-                color: u.role === "admin" ? "#fa7553" : u.role === "supervisor" ? "#9b82d4" : "#7a7590",
+                color: u.role === "admin" ? "var(--color-coral)" : u.role === "supervisor" ? "var(--color-violet-soft)" : "var(--color-text-faint)",
                 background: u.role === "admin" ? "rgba(250,117,83,0.1)" : u.role === "supervisor" ? "rgba(114,85,180,0.12)" : "rgba(255,255,255,0.05)",
                 border: `1px solid ${u.role === "admin" ? "rgba(250,117,83,0.25)" : u.role === "supervisor" ? "rgba(114,85,180,0.25)" : "rgba(255,255,255,0.08)"}`,
               }}>

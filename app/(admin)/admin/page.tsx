@@ -27,9 +27,9 @@ interface Company {
 }
 
 const PLAN_STYLES: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  starter: { label: "Starter", color: "#a09bbf", bg: "rgba(160,155,191,0.1)", border: "rgba(160,155,191,0.2)" },
-  pro:     { label: "Pro",     color: "#9b82d4", bg: "rgba(114,85,180,0.15)", border: "rgba(114,85,180,0.35)" },
-  agency:  { label: "Agency",  color: "#fa7553", bg: "rgba(250,117,83,0.12)", border: "rgba(250,117,83,0.3)" },
+  starter: { label: "Starter", color: "var(--color-text-secondary)", bg: "rgba(160,155,191,0.1)", border: "rgba(160,155,191,0.2)" },
+  pro:     { label: "Pro",     color: "var(--color-violet-soft)", bg: "rgba(114,85,180,0.15)", border: "rgba(114,85,180,0.35)" },
+  agency:  { label: "Agency",  color: "var(--color-coral)", bg: "rgba(250,117,83,0.12)", border: "rgba(250,117,83,0.3)" },
 };
 
 export default function AdminPage() {
@@ -63,10 +63,10 @@ export default function AdminPage() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: "#e9e8e6", letterSpacing: "-0.03em", margin: 0 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--color-text-primary)", letterSpacing: "-0.03em", margin: 0 }}>
             Clientes
           </h1>
-          <p style={{ fontSize: 13, color: "#5a5575", margin: "4px 0 0" }}>
+          <p style={{ fontSize: 13, color: "var(--color-text-muted)", margin: "4px 0 0" }}>
             Gestiona empresas, credenciales Meta y accesos
           </p>
         </div>
@@ -77,7 +77,7 @@ export default function AdminPage() {
               alignItems: "center",
               gap: 7,
               padding: "9px 18px",
-              background: "linear-gradient(135deg, #2b096f, #7255b4)",
+              background: "linear-gradient(135deg, var(--color-violet-dim), var(--color-lavender))",
               border: "none",
               borderRadius: 8,
               fontSize: 13,
@@ -95,15 +95,15 @@ export default function AdminPage() {
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 28 }}>
         {[
-          { label: "Total clientes", value: companies.length, icon: <Building2 size={16} />, color: "#7255b4" },
-          { label: "Activos", value: active, icon: <CheckCircle2 size={16} />, color: "#22c55e" },
-          { label: "Plan Agency", value: agency, icon: <TrendingUp size={16} />, color: "#fa7553" },
-          { label: "Plan Pro", value: pro, icon: <Users size={16} />, color: "#9b82d4" },
+          { label: "Total clientes", value: companies.length, icon: <Building2 size={16} />, color: "var(--color-lavender)" },
+          { label: "Activos", value: active, icon: <CheckCircle2 size={16} />, color: "var(--color-success)" },
+          { label: "Plan Agency", value: agency, icon: <TrendingUp size={16} />, color: "var(--color-coral)" },
+          { label: "Plan Pro", value: pro, icon: <Users size={16} />, color: "var(--color-violet-soft)" },
         ].map((s) => (
           <div
             key={s.label}
             style={{
-              background: "rgba(20,20,36,0.7)",
+              background: "var(--color-surface-glass)",
               border: "1px solid rgba(114,85,180,0.15)",
               borderRadius: 10,
               padding: "16px 18px",
@@ -129,8 +129,8 @@ export default function AdminPage() {
               {s.icon}
             </div>
             <div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: "#e9e8e6", lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: 11.5, color: "#5a5575", marginTop: 3 }}>{s.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: "var(--color-text-primary)", lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: 11.5, color: "var(--color-text-muted)", marginTop: 3 }}>{s.label}</div>
             </div>
           </div>
         ))}
@@ -139,7 +139,7 @@ export default function AdminPage() {
       {/* Table */}
       <div
         style={{
-          background: "rgba(14,14,28,0.8)",
+          background: "var(--color-surface-glass)",
           border: "1px solid rgba(114,85,180,0.15)",
           borderRadius: 12,
           overflow: "hidden",
@@ -156,21 +156,21 @@ export default function AdminPage() {
           }}
         >
           {["Empresa", "Plan", "Meta Account ID", "Token", "Estado", ""].map((h) => (
-            <div key={h} style={{ fontSize: 11, fontWeight: 700, color: "#5a5575", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+            <div key={h} style={{ fontSize: 11, fontWeight: 700, color: "var(--color-text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
               {h}
             </div>
           ))}
         </div>
 
         {loading ? (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "48px 0", color: "#5a5575", fontSize: 13 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "48px 0", color: "var(--color-text-muted)", fontSize: 13 }}>
             <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
             Cargando...
           </div>
         ) : companies.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "48px 0", color: "#5a5575", fontSize: 13 }}>
+          <div style={{ textAlign: "center", padding: "48px 0", color: "var(--color-text-muted)", fontSize: 13 }}>
             No hay clientes aún.{" "}
-            <Link href="/admin/companies/new" style={{ color: "#9b82d4" }}>
+            <Link href="/admin/companies/new" style={{ color: "var(--color-violet-soft)" }}>
               Crea el primero
             </Link>
           </div>
@@ -193,8 +193,8 @@ export default function AdminPage() {
               >
                 {/* Name */}
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "#e9e8e6" }}>{c.name}</div>
-                  <div style={{ fontSize: 11.5, color: "#5a5575", marginTop: 2 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text-primary)" }}>{c.name}</div>
+                  <div style={{ fontSize: 11.5, color: "var(--color-text-muted)", marginTop: 2 }}>
                     {c.userCount} usuario{c.userCount !== 1 ? "s" : ""} · {c.leadCount} leads
                   </div>
                 </div>
@@ -220,7 +220,7 @@ export default function AdminPage() {
                 {/* Meta Account */}
                 <div style={{ fontSize: 12.5, fontFamily: "monospace" }}>
                   {c.metaAdAccountId ? (
-                    <span style={{ color: "#a09bbf" }}>
+                    <span style={{ color: "var(--color-text-secondary)" }}>
                       {c.metaAdAccountId.length > 22 ? c.metaAdAccountId.slice(0, 22) + "…" : c.metaAdAccountId}
                     </span>
                   ) : (
@@ -237,7 +237,7 @@ export default function AdminPage() {
                         fontWeight: 600,
                         padding: "3px 8px",
                         borderRadius: 20,
-                        color: "#fa7553",
+                        color: "var(--color-coral)",
                         background: "rgba(250,117,83,0.1)",
                         border: "1px solid rgba(250,117,83,0.25)",
                       }}
@@ -251,7 +251,7 @@ export default function AdminPage() {
                         fontWeight: 600,
                         padding: "3px 8px",
                         borderRadius: 20,
-                        color: "#9b82d4",
+                        color: "var(--color-violet-soft)",
                         background: "rgba(114,85,180,0.12)",
                         border: "1px solid rgba(114,85,180,0.25)",
                       }}
@@ -274,7 +274,7 @@ export default function AdminPage() {
                       cursor: "pointer",
                       padding: 0,
                       fontSize: 12,
-                      color: c.active ? "#22c55e" : "#5a5575",
+                      color: c.active ? "var(--color-success)" : "var(--color-text-muted)",
                       transition: "color 0.2s",
                     }}
                     title={c.active ? "Desactivar" : "Activar"}
@@ -298,7 +298,7 @@ export default function AdminPage() {
                         borderRadius: 6,
                         fontSize: 12,
                         fontWeight: 500,
-                        color: "#9b82d4",
+                        color: "var(--color-violet-soft)",
                         cursor: "pointer",
                         transition: "background 0.15s",
                       }}
