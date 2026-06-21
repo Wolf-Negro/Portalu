@@ -188,6 +188,7 @@ export async function initDB(): Promise<void> {
   // conversations: el teléfono ya no es único globalmente, sino por empresa.
   await sql`ALTER TABLE conversations ALTER COLUMN company_id SET NOT NULL`;
   await sql`ALTER TABLE conversations DROP CONSTRAINT IF EXISTS conversations_phone_key`;
+  await sql`ALTER TABLE conversations DROP CONSTRAINT IF EXISTS conversations_company_phone_key`;
   await sql`ALTER TABLE conversations ADD CONSTRAINT conversations_company_phone_key UNIQUE (company_id, phone)`;
   await sql`ALTER TABLE conversations ALTER COLUMN company_id DROP DEFAULT`;
 
