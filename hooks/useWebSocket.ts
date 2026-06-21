@@ -8,9 +8,13 @@ export interface WsEvent {
   ts:      number;
 }
 
+// En producción, detrás de nginx, no se expone el puerto 3001 directo —
+// se usa una URL completa (wss://dominio/ws) proxied a localhost:3001.
+// En desarrollo local, sin proxy, se conecta directo a NEXT_PUBLIC_WS_HOST:PORT.
 const WS_BASE_URL =
   typeof window !== "undefined"
-    ? `ws://${process.env.NEXT_PUBLIC_WS_HOST ?? "localhost"}:${process.env.NEXT_PUBLIC_WS_PORT ?? "3001"}`
+    ? (process.env.NEXT_PUBLIC_WS_URL ||
+       `ws://${process.env.NEXT_PUBLIC_WS_HOST ?? "localhost"}:${process.env.NEXT_PUBLIC_WS_PORT ?? "3001"}`)
     : null;
 
 export function useWebSocket(onEvent: (e: WsEvent) => void): {
