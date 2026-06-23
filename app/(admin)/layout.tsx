@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import AdminTopBar from "@/components/admin/AdminTopBar";
-import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -14,11 +13,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   };
 
   return (
-    <ThemeProvider>
-      <div style={{ background: "var(--color-surface-0)", minHeight: "100vh", color: "var(--color-text-primary)" }}>
-        <AdminTopBar user={user} />
-        <main style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 24px" }}>{children}</main>
-      </div>
-    </ThemeProvider>
+    <div style={{ minHeight: "100vh" }}>
+      <AdminTopBar user={user} />
+      <main className="light" style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 24px", background: "var(--color-surface-0)", color: "var(--color-text-primary)", minHeight: "calc(100vh - 56px)" }}>{children}</main>
+    </div>
   );
 }

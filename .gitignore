@@ -49,5 +49,9 @@ prisma/*.db-journal
 /auth/
 /auth.backup-*/
 
+# Datos persistentes en runtime (media del bot, logos subidos) — se preservan
+# manualmente entre despliegues, nunca se versionan.
+/data/
+
 # Herramienta externa no relacionada con Portalu, anidada por error
 /free-claude-code/

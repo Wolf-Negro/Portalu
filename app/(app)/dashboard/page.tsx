@@ -46,6 +46,19 @@ function sumActions(
     .reduce((acc, a) => acc + parseFloat(a.value ?? "0"), 0);
 }
 
+// Meta reporta el MISMO evento de conversión bajo varias action_type a la
+// vez (ej. un lead vía pixel aparece como "lead", "offsite_conversion.fb_pixel_lead"
+// y "onsite_web_lead" simultáneamente, todos con el mismo valor) — sumarlos
+// duplica el conteo. Se toma el máximo entre los tipos candidatos, no la suma.
+function maxAction(
+  actions: { action_type: string; value: string }[],
+  types: string[]
+): number {
+  return actions
+    .filter((a) => types.includes(a.action_type))
+    .reduce((max, a) => Math.max(max, parseFloat(a.value ?? "0")), 0);
+}
+
 // ─── fetchMetaFull ─────────────────────────────────────────────────────────────
 
 interface MetaFetchResult {
@@ -104,12 +117,12 @@ async function fetchMetaFull(
     const actionValues: { action_type: string; value: string }[] =
       (data.action_values as { action_type: string; value: string }[] | undefined) ?? [];
 
-    const leads = sumActions(actions, [
+    const leads = maxAction(actions, [
       "lead",
       "onsite_conversion.lead_grouped",
       "offsite_conversion.fb_pixel_lead",
     ]);
-    const purchases = sumActions(actions, [
+    const purchases = maxAction(actions, [
       "purchase",
       "offsite_conversion.fb_pixel_purchase",
     ]);
@@ -233,7 +246,10 @@ const ORIGIN_LABELS: Record<string, string> = {
 export default async function DashboardPage() {
   const session = await auth();
   const userId = (session?.user as any)?.id as string;
-  const companyId = (session?.user as any)?.companyId as string | undefined;
+  // companyId puede venir null (no solo undefined) si el usuario en BD no
+  // tiene empresa asignada (ej. superadmin) — normalizamos para que Prisma
+  // lo omita del where en vez de fallar con "must not be null".
+  const companyId = ((session?.user as any)?.companyId as string | null | undefined) ?? undefined;
 
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

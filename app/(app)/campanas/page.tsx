@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import { getMetaCredentials } from "@/lib/meta-credentials";
 import CampanasClient from "./CampanasClient";
 
@@ -83,6 +84,7 @@ async function fetchMetaCampaigns(companyId: string | undefined): Promise<{ camp
 
 export default async function CampanasPage() {
   const session = await auth();
+  if ((session?.user as any)?.role === "asesor") redirect("/dashboard");
   const companyId = (session?.user as any)?.companyId as string | undefined;
   const { campaigns, error } = await fetchMetaCampaigns(companyId);
   return <CampanasClient campaigns={campaigns} metaError={error} />;

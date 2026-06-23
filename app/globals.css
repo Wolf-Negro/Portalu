@@ -226,6 +226,10 @@ body {
 }
 
 /* === LANDING RESPONSIVE === */
+/* Nota: NO redeclarar `.hidden` aquí — Tailwind ya genera esa utilidad
+   (sin media query) y una redeclaración dentro de @media termina después
+   en el bundle final, ganándole a CUALQUIER otro breakpoint (lg:flex,
+   xl:block, etc.) en toda la app, no solo en la landing. */
 @media (min-width: 768px) {
   .md\:grid-cols-\[3fr_2fr\] {
     grid-template-columns: 3fr 2fr !important;
@@ -233,18 +237,12 @@ body {
   .md\:flex {
     display: flex !important;
   }
-  .hidden {
-    display: none;
-  }
   .hidden.md\:flex {
     display: flex !important;
   }
 }
 
 @media (max-width: 767px) {
-  .hidden {
-    display: none;
-  }
   .footer-grid {
     grid-template-columns: 1fr 1fr !important;
   }

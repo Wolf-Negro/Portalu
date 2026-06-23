@@ -1,9 +1,11 @@
 import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import ConfiguracionClient from "./ConfiguracionClient";
 
 export default async function ConfiguracionPage() {
   const session = await auth();
+  if ((session?.user as any)?.role === "asesor") redirect("/dashboard");
   const companyId = (session?.user as any)?.companyId;
   const userId = (session?.user as any)?.id;
 

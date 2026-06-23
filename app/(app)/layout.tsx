@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import Sidebar from "@/components/layout/Sidebar";
 import { ToastProvider } from "@/components/ui/toast";
-import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import AluIAFloating from "@/components/alu-ia/AluIAFloating";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -32,21 +32,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <ThemeProvider>
-      <ToastProvider>
-        <div className="flex h-screen overflow-hidden" style={{ background: "var(--color-surface-0)" }}>
-          <Sidebar
-            user={user}
-            unreadAlerts={unreadAlerts}
-            newLeads={newLeads}
-            companyLogo={(company as any)?.logo ?? undefined}
-            companyName={company?.name ?? undefined}
-          />
-          <main className="flex-1 overflow-y-auto overflow-x-hidden">
-            {children}
-          </main>
-        </div>
-      </ToastProvider>
-    </ThemeProvider>
+    <ToastProvider>
+      <div className="flex h-screen overflow-hidden">
+        <Sidebar
+          user={user}
+          unreadAlerts={unreadAlerts}
+          newLeads={newLeads}
+          companyLogo={(company as any)?.logo ?? undefined}
+          companyName={company?.name ?? undefined}
+        />
+        <main className="light flex-1 overflow-y-auto overflow-x-hidden" style={{ background: "var(--color-surface-0)" }}>
+          {children}
+        </main>
+      </div>
+      <AluIAFloating />
+    </ToastProvider>
   );
 }

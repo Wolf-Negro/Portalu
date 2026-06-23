@@ -594,6 +594,45 @@ export default function DashboardClient({
   const [campaignMetaData, setCampaignMetaData] = useState<MetaData | null>(null);
   const [campaignMetaLoading, setCampaignMetaLoading] = useState(false);
 
+  // ── Custom date-range state (para comparar contra el Administrador de anuncios) ─
+  const [customRangeOpen, setCustomRangeOpen] = useState(false);
+  const [customSince, setCustomSince] = useState("");
+  const [customUntil, setCustomUntil] = useState("");
+  const [customRangeData, setCustomRangeData] = useState<MetaData | null>(null);
+  const [customRangeLoading, setCustomRangeLoading] = useState(false);
+  const [customRangeError, setCustomRangeError] = useState<string | null>(null);
+
+  const fetchCustomRange = async () => {
+    if (!customSince || !customUntil) return;
+    setCustomRangeLoading(true);
+    setCustomRangeError(null);
+    try {
+      const res = await fetch(`/api/dashboard/meta-range?since=${customSince}&until=${customUntil}`);
+      const d = await res.json();
+      if (d.error || d.message) {
+        setCustomRangeError(d.error ?? d.message);
+        setCustomRangeData(null);
+        return;
+      }
+      const toNum = (v: unknown) => (typeof v === "number" ? v : parseFloat(String(v ?? "0")) || 0);
+      setCustomRangeData({
+        spend: toNum(d.spend), reach: toNum(d.reach), impressions: toNum(d.impressions), clicks: toNum(d.clicks),
+        linkClicks: toNum(d.linkClicks), outboundClicks: toNum(d.outboundClicks), landingPageViews: toNum(d.landingPageViews),
+        leads: toNum(d.leads), purchases: toNum(d.purchases), purchaseValue: toNum(d.purchaseValue),
+        ctr: toNum(d.ctr), cpc: toNum(d.cpc), cpm: toNum(d.cpm), frequency: toNum(d.frequency),
+        videoViews: toNum(d.videoViews), videoP25: 0, videoP50: 0, videoP75: 0, videoP100: 0,
+        postEngagement: toNum(d.postEngagement), postReactions: toNum(d.postReactions),
+        postComments: toNum(d.postComments), postShares: toNum(d.postShares),
+        cpl: toNum(d.cpl), roas: toNum(d.roas), costPerLandingPageView: toNum(d.costPerLandingPageView),
+      });
+    } catch {
+      setCustomRangeError("Error al consultar Meta Ads.");
+      setCustomRangeData(null);
+    } finally {
+      setCustomRangeLoading(false);
+    }
+  };
+
   // ── Chart builder state ────────────────────────────────────────────────────
   const [chartMetrics, setChartMetrics] = useState<string[]>(["leads"]);
   const [chartPeriod, setChartPeriod] = useState<Period>("last_30d");
@@ -1644,6 +1683,88 @@ export default function DashboardClient({
               )}
             </div>
 
+            {/* Custom date range */}
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={() => setCustomRangeOpen((v) => !v)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  background: customRangeData ? "rgba(114,85,180,0.15)" : "rgba(255,255,255,0.04)",
+                  border: `1px solid ${customRangeData ? "rgba(114,85,180,0.5)" : "rgba(114,85,180,0.2)"}`,
+                  borderRadius: 8, padding: "5px 12px", cursor: "pointer",
+                  color: customRangeData ? "var(--color-text-primary)" : "var(--color-text-faint)", fontSize: 12,
+                }}
+              >
+                <span>📅</span>
+                <span>{customRangeData ? `${customSince} → ${customUntil}` : "Rango personalizado"}</span>
+                <span style={{ fontSize: 9, color: "var(--color-text-muted)" }}>▼</span>
+              </button>
+
+              {customRangeOpen && (
+                <>
+                  <div onClick={() => setCustomRangeOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 59 }} />
+                  <div style={{
+                    position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 60,
+                    background: "var(--color-surface-2)", border: "1px solid rgba(114,85,180,0.3)",
+                    borderRadius: 12, padding: 14, minWidth: 240,
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+                  }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--color-text-secondary)", marginBottom: 8 }}>
+                      Comparar contra el Administrador de anuncios
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <label style={{ fontSize: 10.5, color: "var(--color-text-muted)" }}>
+                        Desde
+                        <input
+                          type="date"
+                          value={customSince}
+                          onChange={(e) => setCustomSince(e.target.value)}
+                          style={{
+                            width: "100%", marginTop: 3, background: "rgba(255,255,255,0.05)",
+                            border: "1px solid rgba(114,85,180,0.25)", borderRadius: 6, padding: "6px 8px",
+                            color: "var(--color-text-primary)", fontSize: 12, outline: "none", boxSizing: "border-box",
+                          }}
+                        />
+                      </label>
+                      <label style={{ fontSize: 10.5, color: "var(--color-text-muted)" }}>
+                        Hasta
+                        <input
+                          type="date"
+                          value={customUntil}
+                          onChange={(e) => setCustomUntil(e.target.value)}
+                          style={{
+                            width: "100%", marginTop: 3, background: "rgba(255,255,255,0.05)",
+                            border: "1px solid rgba(114,85,180,0.25)", borderRadius: 6, padding: "6px 8px",
+                            color: "var(--color-text-primary)", fontSize: 12, outline: "none", boxSizing: "border-box",
+                          }}
+                        />
+                      </label>
+                      <button
+                        onClick={fetchCustomRange}
+                        disabled={!customSince || !customUntil || customRangeLoading}
+                        style={{
+                          marginTop: 2, background: "linear-gradient(135deg,var(--color-violet-dim),var(--color-lavender))",
+                          border: "none", borderRadius: 8, padding: "8px 0",
+                          color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer",
+                          opacity: !customSince || !customUntil || customRangeLoading ? 0.5 : 1,
+                        }}
+                      >
+                        {customRangeLoading ? "Consultando..." : "Consultar"}
+                      </button>
+                      {customRangeData && (
+                        <button
+                          onClick={() => { setCustomRangeData(null); setCustomRangeError(null); }}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-muted)", fontSize: 11 }}
+                        >
+                          Quitar rango
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
             <button
               onClick={() => { setItems(DEFAULT_ITEMS); debouncedSave(DEFAULT_ITEMS); }}
               style={{
@@ -1656,6 +1777,38 @@ export default function DashboardClient({
             </button>
           </div>
         </div>
+
+        {/* ── Custom range result card ── */}
+        {(customRangeError || customRangeData) && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap",
+            padding: "14px 18px", borderRadius: 12, marginBottom: 16,
+            background: "rgba(114,85,180,0.08)", border: "1px solid rgba(114,85,180,0.25)",
+          }}>
+            {customRangeError ? (
+              <span style={{ fontSize: 12.5, color: "var(--color-text-muted)" }}>{customRangeError}</span>
+            ) : customRangeData && (
+              <>
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--color-lavender)" }}>
+                  {customSince} → {customUntil}
+                </span>
+                {[
+                  { label: "Gasto", value: `S/ ${customRangeData.spend.toFixed(2)}` },
+                  { label: "Leads", value: customRangeData.leads.toLocaleString("es-PE") },
+                  { label: "CPL", value: `S/ ${customRangeData.cpl.toFixed(2)}` },
+                  { label: "CTR", value: `${customRangeData.ctr.toFixed(2)}%` },
+                  { label: "Clics", value: customRangeData.clicks.toLocaleString("es-PE") },
+                  { label: "Alcance", value: customRangeData.reach.toLocaleString("es-PE") },
+                ].map((m) => (
+                  <div key={m.label} style={{ display: "flex", flexDirection: "column" }}>
+                    <span style={{ fontSize: 10, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{m.label}</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: "var(--color-text-primary)" }}>{m.value}</span>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        )}
 
         {/* ── Computed insights ── */}
         {effectiveMetaToday && (() => {

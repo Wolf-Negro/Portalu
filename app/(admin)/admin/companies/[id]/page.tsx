@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, UserPlus, CheckCircle2, XCircle, Eye, EyeOff, ImagePlus, Building2 } from "lucide-react";
+import { ArrowLeft, Loader2, UserPlus, CheckCircle2, XCircle, Eye, EyeOff, ImagePlus, Building2, Trash2, AlertTriangle } from "lucide-react";
 
 const INPUT_STYLE: React.CSSProperties = {
   width: "100%",
@@ -76,6 +76,11 @@ export default function EditCompanyPage() {
   const [showToken, setShowToken] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   // New user form
   const [showUserForm, setShowUserForm] = useState(false);
@@ -171,6 +176,29 @@ export default function EditCompanyPage() {
     if (res.ok) setCompany((prev) => prev ? { ...prev, active: !prev.active } : prev);
   }
 
+  async function handleDelete() {
+    if (!company) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      const res = await fetch(`/api/admin/companies/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmName: deleteConfirmText }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setDeleteError(d.error || "No se pudo borrar la empresa.");
+        return;
+      }
+      router.push("/admin");
+    } catch {
+      setDeleteError("Error de red al borrar la empresa.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   async function addUser(e: React.FormEvent) {
     e.preventDefault();
     setAddingUser(true);
@@ -212,26 +240,110 @@ export default function EditCompanyPage() {
             {company.leadCount} leads · {company.opportunityCount} oportunidades
           </p>
         </div>
-        <button
-          onClick={toggleActive}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "7px 14px",
-            background: company.active ? "rgba(239,68,68,0.08)" : "rgba(34,197,94,0.08)",
-            border: `1px solid ${company.active ? "rgba(239,68,68,0.25)" : "rgba(34,197,94,0.25)"}`,
-            borderRadius: 7,
-            fontSize: 12.5,
-            fontWeight: 600,
-            color: company.active ? "#f87171" : "#4ade80",
-            cursor: "pointer",
-          }}
-        >
-          {company.active ? <XCircle size={13} /> : <CheckCircle2 size={13} />}
-          {company.active ? "Desactivar empresa" : "Activar empresa"}
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={toggleActive}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 14px",
+              background: company.active ? "rgba(239,68,68,0.08)" : "rgba(34,197,94,0.08)",
+              border: `1px solid ${company.active ? "rgba(239,68,68,0.25)" : "rgba(34,197,94,0.25)"}`,
+              borderRadius: 7,
+              fontSize: 12.5,
+              fontWeight: 600,
+              color: company.active ? "#f87171" : "#4ade80",
+              cursor: "pointer",
+            }}
+          >
+            {company.active ? <XCircle size={13} /> : <CheckCircle2 size={13} />}
+            {company.active ? "Desactivar empresa" : "Activar empresa"}
+          </button>
+          <button
+            onClick={() => { setShowDeleteModal(true); setDeleteConfirmText(""); setDeleteError(""); }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 14px",
+              background: "rgba(239,68,68,0.08)",
+              border: "1px solid rgba(239,68,68,0.25)",
+              borderRadius: 7,
+              fontSize: 12.5,
+              fontWeight: 600,
+              color: "#f87171",
+              cursor: "pointer",
+            }}
+          >
+            <Trash2 size={13} />
+            Borrar definitivamente
+          </button>
+        </div>
       </div>
+
+      {showDeleteModal && (
+        <div
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowDeleteModal(false); }}
+        >
+          <div style={{ background: "var(--color-surface-card)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 14, padding: 28, maxWidth: 440, width: "90%" }}>
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 16 }}>
+              <AlertTriangle size={20} style={{ color: "#f87171", flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--color-text-primary)", margin: "0 0 6px" }}>
+                  Borrar "{company.name}" definitivamente
+                </h3>
+                <p style={{ fontSize: 12.5, color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>
+                  Esto elimina permanentemente la empresa, sus usuarios, leads, oportunidades, campañas y todo su
+                  historial de WhatsApp. <strong style={{ color: "#f87171" }}>No se puede deshacer.</strong>
+                </p>
+              </div>
+            </div>
+
+            <label style={{ ...LABEL_STYLE, marginTop: 4 }}>
+              Escribe <strong>{company.name}</strong> para confirmar
+            </label>
+            <input
+              style={INPUT_STYLE}
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder={company.name}
+              autoComplete="off"
+            />
+
+            {deleteError && (
+              <p style={{ fontSize: 12, color: "#f87171", marginTop: 10 }}>{deleteError}</p>
+            )}
+
+            <div style={{ display: "flex", gap: 8, marginTop: 20, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                style={{ padding: "8px 16px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, fontSize: 12.5, color: "var(--color-text-muted)", cursor: "pointer" }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting || deleteConfirmText !== company.name}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "8px 16px",
+                  background: deleteConfirmText === company.name ? "linear-gradient(135deg, #b91c1c, #ef4444)" : "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(239,68,68,0.3)",
+                  borderRadius: 7, fontSize: 12.5, fontWeight: 600,
+                  color: deleteConfirmText === company.name ? "#fff" : "var(--color-text-muted)",
+                  cursor: deleteConfirmText === company.name ? "pointer" : "not-allowed",
+                }}
+              >
+                {deleting ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <Trash2 size={12} />}
+                {deleting ? "Borrando..." : "Borrar definitivamente"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Logo ── */}
       <div style={{ ...SECTION_STYLE, display: "flex", alignItems: "center", gap: 20 }}>

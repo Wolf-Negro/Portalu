@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import LoginDashboardPreview from "@/components/login/LoginDashboardPreview";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,110 +32,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex" style={{ background: "#0e0e14" }}>
-      {/* ── LEFT: Cosmic portal ── */}
-      <div
-        className="hidden lg:flex flex-1 items-center justify-center relative overflow-hidden"
-        style={{ background: "radial-gradient(ellipse at 60% 50%, #1a0a3a 0%, #0e0e14 70%)" }}
-      >
-        {/* Floating diagonal brand shapes */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div
-            className="absolute animate-lightning-float"
-            style={{
-              top: "-10%", left: "-12%", width: "50%", height: "65%",
-              background: "linear-gradient(135deg, rgba(114,85,180,0.1) 0%, transparent 65%)",
-              clipPath: "polygon(30% 0%, 100% 0%, 70% 100%, 0% 100%)",
-              transform: "rotate(-20deg)",
-              "--r": "-20deg",
-            } as React.CSSProperties}
-          />
-          <div
-            className="absolute animate-lightning-float"
-            style={{
-              bottom: "-8%", right: "-8%", width: "45%", height: "55%",
-              background: "linear-gradient(315deg, rgba(250,117,83,0.07) 0%, transparent 65%)",
-              clipPath: "polygon(0% 0%, 70% 0%, 100% 100%, 30% 100%)",
-              transform: "rotate(15deg)",
-              animationDelay: "1.8s",
-              "--r": "15deg",
-            } as React.CSSProperties}
-          />
-          <div
-            className="absolute animate-lightning-float"
-            style={{
-              top: "55%", left: "8%", width: "18%", height: "22%",
-              background: "linear-gradient(135deg, rgba(114,85,180,0.08) 0%, transparent 80%)",
-              transform: "rotate(-40deg)",
-              animationDelay: "3.2s",
-              "--r": "-40deg",
-            } as React.CSSProperties}
-          />
-        </div>
-
-        {/* Portal rings */}
-        <div className="relative flex items-center justify-center z-10">
-          {/* Outermost glow halo */}
-          <div className="absolute" style={{
-            width: 420, height: 420, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(114,85,180,0.06) 0%, transparent 70%)",
-          }} />
-          {/* Ring 1 - slow */}
-          <div className="absolute animate-portal-spin-slow" style={{
-            width: 370, height: 370, borderRadius: "50%",
-            border: "1px solid rgba(114,85,180,0.2)",
-            borderTopColor: "rgba(114,85,180,0.65)",
-            borderRightColor: "transparent",
-          }} />
-          {/* Ring 2 */}
-          <div className="absolute animate-portal-spin" style={{
-            width: 300, height: 300, borderRadius: "50%",
-            border: "1.5px solid rgba(114,85,180,0.3)",
-            borderBottomColor: "rgba(250,117,83,0.55)",
-            borderLeftColor: "transparent",
-          }} />
-          {/* Ring 3 reverse */}
-          <div className="absolute animate-portal-spin-reverse" style={{
-            width: 230, height: 230, borderRadius: "50%",
-            border: "1.5px solid rgba(114,85,180,0.45)",
-            borderTopColor: "rgba(233,232,230,0.45)",
-            borderRightColor: "transparent",
-          }} />
-          {/* Ring 4 fast */}
-          <div className="absolute animate-portal-spin" style={{
-            width: 156, height: 156, borderRadius: "50%",
-            border: "1px solid rgba(250,117,83,0.25)",
-            borderBottomColor: "rgba(250,117,83,0.75)",
-            borderLeftColor: "transparent",
-            animationDuration: "4s",
-          }} />
-
-          {/* Core */}
-          <div className="animate-portal-pulse relative flex items-center justify-center" style={{
-            width: 96, height: 96, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(114,85,180,0.35) 0%, rgba(43,9,111,0.15) 60%, transparent 100%)",
-          }}>
-            <Image
-              src="/isotype.svg"
-              alt="Alucinando"
-              width={48}
-              height={48}
-              style={{ filter: "drop-shadow(0 0 14px rgba(114,85,180,0.9)) drop-shadow(0 0 4px rgba(114,85,180,0.6))" }}
-            />
-          </div>
-        </div>
-
-        {/* Tagline */}
-        <div className="absolute bottom-10 left-0 right-0 text-center z-10">
-          <p className="text-xs tracking-[0.3em] uppercase" style={{ color: "rgba(160,155,191,0.6)" }}>
-            Marketing · Ventas · Inteligencia Artificial
-          </p>
-        </div>
-      </div>
-
-      {/* ── RIGHT: Login form ── */}
+      {/* ── LEFT: Login form ── */}
       <div
         className="flex-1 lg:max-w-[460px] flex flex-col items-center justify-between py-12 px-8"
-        style={{ background: "#141420", borderLeft: "1px solid rgba(114,85,180,0.12)" }}
+        style={{ background: "#141420" }}
       >
         <div />
 
@@ -238,6 +139,36 @@ export default function LoginPage() {
         <p className="text-[11px] text-center" style={{ color: "rgba(90,85,117,0.75)" }}>
           PORTALU.PE · PLATAFORMA INTERNA · ALUCINANDO SOFTWARE © 2025
         </p>
+      </div>
+
+      {/* ── RIGHT: Product showcase (ocupa toda la columna derecha) ── */}
+      <div
+        className="hidden lg:block flex-1 relative overflow-hidden"
+        style={{ background: "linear-gradient(135deg, #f1f0fb 0%, #e8e6f7 100%)" }}
+      >
+        <div className="relative z-10 max-w-md pt-20 pl-16 pr-10">
+          <h2 className="text-4xl font-bold leading-tight mb-5" style={{ color: "#1a1530" }}>
+            Convierte tus campañas en{" "}
+            <span style={{ color: "#7255b4" }}>decisiones.</span>
+          </h2>
+          <p className="text-sm" style={{ color: "#5a5577" }}>
+            El centro de control comercial de Alucinando.
+          </p>
+        </div>
+
+        <div
+          className="absolute"
+          style={{
+            right: "-4%",
+            top: "30%",
+            width: "78%",
+            perspective: "2000px",
+          }}
+        >
+          <div style={{ transform: "rotateX(8deg) rotateY(-14deg) rotateZ(2deg)", transformStyle: "preserve-3d" }}>
+            <LoginDashboardPreview />
+          </div>
+        </div>
       </div>
     </div>
   );

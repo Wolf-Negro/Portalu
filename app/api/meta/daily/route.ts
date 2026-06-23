@@ -7,6 +7,7 @@ const META_API = "https://graph.facebook.com/v21.0";
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if ((session.user as any).role === "asesor") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const companyId = (session.user as any).companyId as string | undefined;
   const { token: TOKEN } = await getMetaCredentials(companyId);

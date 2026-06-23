@@ -64,16 +64,26 @@ function sumActions(actions: MetaAction[], types: string[]): number {
     .reduce((acc, a) => acc + parseFloat(a.value ?? "0"), 0);
 }
 
+// Meta reporta el MISMO evento de conversión bajo varias action_type a la
+// vez (ej. un lead vía pixel aparece como "lead", "offsite_conversion.fb_pixel_lead"
+// y "onsite_web_lead" simultáneamente, todos con el mismo valor) — sumarlos
+// duplica el conteo. Se toma el máximo entre los tipos candidatos, no la suma.
+function maxAction(actions: MetaAction[], types: string[]): number {
+  return actions
+    .filter((a) => types.includes(a.action_type))
+    .reduce((max, a) => Math.max(max, parseFloat(a.value ?? "0")), 0);
+}
+
 function parseInsightEntry(entry: MetaInsightEntry): Record<MetricKey, number> {
   const actions: MetaAction[] = entry.actions ?? [];
   const actionValues: MetaAction[] = entry.action_values ?? [];
 
-  const leads = sumActions(actions, [
+  const leads = maxAction(actions, [
     "lead",
     "onsite_conversion.lead_grouped",
     "offsite_conversion.fb_pixel_lead",
   ]);
-  const purchases = sumActions(actions, [
+  const purchases = maxAction(actions, [
     "purchase",
     "offsite_conversion.fb_pixel_purchase",
   ]);

@@ -21,27 +21,30 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 interface NavItem {
   href: string;
   icon: React.ElementType;
   label: string;
   badge?: number;
+  hideForRoles?: string[];
 }
 
+// El rol "asesor" solo debe ver su flujo operativo diario — sin Campañas
+// (gasto/configuración publicitaria) ni Configuración (datos sensibles de
+// la empresa, usuarios, credenciales).
 function buildNavItems(unreadAlerts: number, newLeads: number): NavItem[] {
   return [
     { href: "/dashboard",     icon: LayoutDashboard, label: "Dashboard" },
     { href: "/leads",         icon: Users,           label: "Leads",         badge: newLeads || undefined },
     { href: "/pipeline",      icon: Kanban,          label: "Pipeline" },
-    { href: "/campanas",      icon: Megaphone,       label: "Campañas" },
+    { href: "/campanas",      icon: Megaphone,       label: "Campañas",      hideForRoles: ["asesor"] },
     { href: "/whatsapp",      icon: MessageSquare,   label: "WhatsApp" },
     { href: "/alu-ia",        icon: Sparkles,        label: "ALU.IA",        badge: unreadAlerts || undefined },
     { href: "/proyecciones",  icon: TrendingUp,      label: "Proyecciones" },
     { href: "/reportes",      icon: BarChart3,       label: "Reportes" },
     { href: "/entrenamiento", icon: GraduationCap,   label: "Entrenamiento" },
-    { href: "/configuracion", icon: Settings,        label: "Configuración" },
+    { href: "/configuracion", icon: Settings,        label: "Configuración", hideForRoles: ["asesor"] },
   ];
 }
 
@@ -56,7 +59,8 @@ interface Props {
 export default function Sidebar({ user, unreadAlerts = 0, newLeads = 0, companyLogo, companyName }: Props) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const navItems = buildNavItems(unreadAlerts, newLeads);
+  const navItems = buildNavItems(unreadAlerts, newLeads)
+    .filter((item) => !item.hideForRoles?.includes(user.role));
 
   return (
     <aside
@@ -103,7 +107,6 @@ export default function Sidebar({ user, unreadAlerts = 0, newLeads = 0, companyL
             style={{ filter: "drop-shadow(0 0 6px rgba(114,85,180,0.6))" }}
           />
         )}
-        {!collapsed && <ThemeToggle size={26} />}
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="p-1 rounded-md transition-colors flex-shrink-0 hover:bg-white/5"
@@ -112,11 +115,6 @@ export default function Sidebar({ user, unreadAlerts = 0, newLeads = 0, companyL
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
       </div>
-      {collapsed && (
-        <div className="flex justify-center py-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(114,85,180,0.1)" }}>
-          <ThemeToggle size={26} />
-        </div>
-      )}
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3 space-y-0.5 px-2">
@@ -176,20 +174,15 @@ export default function Sidebar({ user, unreadAlerts = 0, newLeads = 0, companyL
       >
         {/* Company logo */}
         {companyLogo && (
-          <div className={cn("flex items-center gap-2 px-2.5 py-2", collapsed && "justify-center")}>
+          <div className="flex items-center justify-center px-2.5 py-3">
             <Image
               src={companyLogo}
               alt={companyName || "Logo"}
-              width={collapsed ? 28 : 24}
-              height={collapsed ? 28 : 24}
+              width={collapsed ? 36 : 64}
+              height={collapsed ? 36 : 64}
               className="rounded object-contain flex-shrink-0"
-              style={{ background: "var(--color-violet-dim)", padding: 2 }}
+              style={{ background: "var(--color-violet-dim)", padding: 6 }}
             />
-            {!collapsed && companyName && (
-              <span className="text-xs font-medium truncate" style={{ color: "var(--color-text-secondary)" }}>
-                {companyName}
-              </span>
-            )}
           </div>
         )}
         {!collapsed && (

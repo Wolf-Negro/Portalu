@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
-import { writeFile } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
 export const runtime = "nodejs";
@@ -31,13 +31,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const ext = file.type === "image/svg+xml" ? "svg" : file.type.split("/")[1];
-  const filename = `${id}.${ext}`;
-  const filePath = path.join(process.cwd(), "public", "logos", filename);
+  // Filename con timestamp para invalidar caché de navegador/CDN al re-subir
+  // un logo nuevo (antes se reusaba siempre el mismo nombre `<id>.<ext>`).
+  const filename = `${id}-${Date.now()}.${ext}`;
+  const logosDir = path.join(process.cwd(), "data", "logos");
+  await mkdir(logosDir, { recursive: true });
+  const filePath = path.join(logosDir, filename);
 
   const bytes = await file.arrayBuffer();
   await writeFile(filePath, Buffer.from(bytes));
 
-  const logoUrl = `/logos/${filename}`;
+  const logoUrl = `/api/media/logos/${filename}`;
   await prisma.company.update({ where: { id }, data: { logo: logoUrl } as any });
 
   return NextResponse.json({ logoUrl });

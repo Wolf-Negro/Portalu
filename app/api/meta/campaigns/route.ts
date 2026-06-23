@@ -7,13 +7,20 @@ const META_API = "https://graph.facebook.com/v21.0";
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if ((session.user as any).role === "asesor") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const companyId = (session.user as any).companyId as string | undefined;
-  const { token: TOKEN, account: ACCOUNT } = await getMetaCredentials(companyId);
+  const { token: TOKEN, account: rawAccount } = await getMetaCredentials(companyId);
 
   if (!TOKEN || TOKEN.startsWith("EAA...")) {
     return NextResponse.json({ error: "META_ACCESS_TOKEN not configured" }, { status: 503 });
   }
+  if (!rawAccount) {
+    return NextResponse.json({ error: "Meta Ads no está configurado para esta empresa" }, { status: 503 });
+  }
+  // Meta exige el prefijo "act_" en el ID de cuenta; getMetaCredentials lo
+  // devuelve crudo — sin esto, el endpoint resuelve el nodo equivocado (#100).
+  const ACCOUNT = rawAccount.startsWith("act_") ? rawAccount : `act_${rawAccount}`;
 
   try {
     const { searchParams } = new URL(req.url);
@@ -28,8 +35,9 @@ export async function GET(req: NextRequest) {
 
     const campaigns = campData.data || [];
 
-    // 2. Fetch insights for each campaign in parallel
-    const insightsResults = await Promise.all(
+    // 2. Fetch insights for each campaign in parallel (allSettled: un fallo
+    // puntual en una campaña no debe tumbar el refresco de las demás)
+    const settled = await Promise.allSettled(
       campaigns.map(async (c: any) => {
         const insRes = await fetch(
           `${META_API}/${c.id}/insights?fields=spend,reach,impressions,clicks,actions,cost_per_action_type,ctr,cpm,cpp,frequency&date_preset=${datePreset}&access_token=${TOKEN}`
@@ -37,6 +45,9 @@ export async function GET(req: NextRequest) {
         const insData = await insRes.json();
         return { campaignId: c.id, insights: insData.data?.[0] || null };
       })
+    );
+    const insightsResults = settled.map((r, i) =>
+      r.status === "fulfilled" ? r.value : { campaignId: campaigns[i].id, insights: null }
     );
 
     // 3. Merge campaigns with insights

@@ -4,7 +4,6 @@ import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, Building2, Shield, Settings2 } from "lucide-react";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 interface Props {
   user: { name: string; email: string };
@@ -119,7 +118,6 @@ export default function AdminTopBar({ user }: Props) {
 
         {/* Right */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <ThemeToggle size={28} />
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-primary)" }}>{user.name}</div>
             <div style={{ fontSize: 10, color: "var(--color-text-muted)" }}>{user.email}</div>
