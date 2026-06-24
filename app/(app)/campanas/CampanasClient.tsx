@@ -346,12 +346,16 @@ function ObjectiveSummaryBlock({ groups }: { groups: ObjectiveGroup[] }) {
 export default function CampanasClient({
   campaigns: initialCampaigns,
   metaError,
+  metaAccounts = [],
 }: {
   campaigns: Campaign[];
   metaError?: string;
+  metaAccounts?: { accountId: string; label: string | null }[];
 }) {
   const { showToast } = useToast();
   const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [accountSelectorOpen, setAccountSelectorOpen] = useState(false);
   const [selected, setSelected] = useState<string | null>(initialCampaigns[0]?.id || null);
   const [adsets, setAdsets] = useState<AdSet[]>([]);
   const [dailyData, setDailyData] = useState<unknown[]>([]);
@@ -399,7 +403,7 @@ export default function CampanasClient({
     }
   }, [selected]);
 
-  // When datePreset changes, reload everything
+  // When datePreset or selectedAccountId changes, reload everything
   useEffect(() => {
     if (selected) loadDailyData(selected, datePreset);
     refreshCampaignsWithPreset(datePreset);
@@ -411,13 +415,15 @@ export default function CampanasClient({
         loadHourlyData(selected, datePreset);
       }
     }
-  }, [datePreset]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [datePreset, selectedAccountId]);
 
   async function loadDailyData(campaignId: string, preset: string = datePreset) {
     setLoadingDaily(true);
     setErrorDaily(false);
     try {
-      const res = await fetch(`/api/meta/daily?campaign_id=${campaignId}&date_preset=${preset}`);
+      const accountParam = selectedAccountId ? `&account_id=${selectedAccountId}` : "";
+      const res = await fetch(`/api/meta/daily?campaign_id=${campaignId}&date_preset=${preset}${accountParam}`);
       if (!res.ok) throw new Error("Error al cargar datos diarios");
       const data = await res.json();
       setDailyData(data.daily || []);
@@ -432,7 +438,8 @@ export default function CampanasClient({
     setErrorAdsets(false);
     setShowAdsets(true);
     try {
-      const res = await fetch(`/api/meta/adsets?campaign_id=${campaignId}&date_preset=${preset}`);
+      const accountParam = selectedAccountId ? `&account_id=${selectedAccountId}` : "";
+      const res = await fetch(`/api/meta/adsets?campaign_id=${campaignId}&date_preset=${preset}${accountParam}`);
       if (!res.ok) throw new Error("Error al cargar conjuntos de anuncios");
       const data = await res.json();
       setAdsets(data.adsets || []);
@@ -448,7 +455,8 @@ export default function CampanasClient({
     setShowAds(true);
     setSelectedAdset(adsetId);
     try {
-      const res = await fetch(`/api/meta/ads?adset_id=${adsetId}&date_preset=${preset}`);
+      const accountParam = selectedAccountId ? `&account_id=${selectedAccountId}` : "";
+      const res = await fetch(`/api/meta/ads?adset_id=${adsetId}&date_preset=${preset}${accountParam}`);
       if (!res.ok) throw new Error("Error al cargar anuncios");
       const data = await res.json();
       setAds(data.ads || []);
@@ -465,7 +473,8 @@ export default function CampanasClient({
     setErrorHourly(false);
     setHourlyData([]);
     try {
-      const res = await fetch(`/api/meta/hourly?campaign_id=${campaignId}&date_preset=${preset}`);
+      const accountParam = selectedAccountId ? `&account_id=${selectedAccountId}` : "";
+      const res = await fetch(`/api/meta/hourly?campaign_id=${campaignId}&date_preset=${preset}${accountParam}`);
       if (!res.ok) throw new Error("Error al cargar datos por hora");
       const data = await res.json();
       if (data.hourly) setHourlyData(data.hourly);
@@ -477,7 +486,8 @@ export default function CampanasClient({
 
   async function refreshCampaignsWithPreset(preset: string) {
     try {
-      const res = await fetch(`/api/meta/campaigns?date_preset=${preset}`);
+      const accountParam = selectedAccountId ? `&account_id=${selectedAccountId}` : "";
+      const res = await fetch(`/api/meta/campaigns?date_preset=${preset}${accountParam}`);
       if (!res.ok) throw new Error("Error al actualizar campañas");
       const data = await res.json();
       if (data.campaigns) setCampaigns(data.campaigns);
@@ -608,6 +618,59 @@ export default function CampanasClient({
             })}
           </div>
 
+          {metaAccounts.length > 1 && (
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={() => setAccountSelectorOpen((v) => !v)}
+                className="text-xs px-3 py-1.5 rounded-lg"
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  background: selectedAccountId ? "rgba(114,85,180,0.15)" : "var(--color-surface-glass)",
+                  border: "1px solid rgba(114,85,180,0.2)",
+                  color: "var(--color-text-secondary)", cursor: "pointer",
+                }}
+              >
+                🏢 {selectedAccountId ? (metaAccounts.find((a) => a.accountId === selectedAccountId)?.label || selectedAccountId) : "Todas las cuentas"} ▼
+              </button>
+              {accountSelectorOpen && (
+                <>
+                  <div onClick={() => setAccountSelectorOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 59 }} />
+                  <div style={{
+                    position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 60,
+                    background: "var(--color-surface-2)", border: "1px solid rgba(114,85,180,0.3)",
+                    borderRadius: 12, padding: 8, minWidth: 200,
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+                  }}>
+                    <button
+                      onClick={() => { setSelectedAccountId(null); setAccountSelectorOpen(false); }}
+                      style={{
+                        width: "100%", textAlign: "left", padding: "8px 10px",
+                        background: !selectedAccountId ? "rgba(114,85,180,0.15)" : "none",
+                        border: "none", borderRadius: 8, cursor: "pointer",
+                        color: !selectedAccountId ? "var(--color-text-primary)" : "var(--color-text-secondary)", fontSize: 12, marginBottom: 4,
+                      }}
+                    >
+                      Todas las cuentas
+                    </button>
+                    {metaAccounts.map((a) => (
+                      <button
+                        key={a.accountId}
+                        onClick={() => { setSelectedAccountId(a.accountId); setAccountSelectorOpen(false); }}
+                        style={{
+                          width: "100%", textAlign: "left", padding: "8px 10px",
+                          background: selectedAccountId === a.accountId ? "rgba(114,85,180,0.15)" : "none",
+                          border: "none", borderRadius: 8, cursor: "pointer",
+                          color: "var(--color-text-secondary)", fontSize: 12, marginBottom: 2,
+                        }}
+                      >
+                        {a.label || a.accountId}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           {metaError && (
             <span
               className="text-xs px-3 py-1.5 rounded-lg"

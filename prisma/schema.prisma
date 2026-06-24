@@ -85,6 +85,24 @@ model Company {
   alerts           Alert[]
   weeklySummaries  WeeklySummary[]
   projections      Projection[]
+  metaAdAccounts   MetaAdAccount[]
+}
+
+// Cuentas publicitarias de Meta ADICIONALES de una empresa — la cuenta
+// "primaria" sigue viviendo en Company.metaAdAccountId/metaAccessToken
+// (no se migra, evita romper a los clientes que ya tienen una sola cuenta).
+// Cuando una empresa tiene 0 filas aquí, se comporta exactamente igual que
+// antes. accessToken nulo = usa el token de la empresa o el global.
+model MetaAdAccount {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  accountId   String
+  accessToken String?
+  label       String?
+  createdAt   DateTime @default(now())
+
+  @@index([companyId])
 }
 
 model Lead {

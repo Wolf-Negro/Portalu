@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getMetaCredentials } from "@/lib/meta-credentials";
+import { getMetaCredentials, getAllMetaAdAccounts } from "@/lib/meta-credentials";
 
 export const dynamic = "force-dynamic";
 
@@ -163,23 +163,10 @@ const OBJECTIVE_MAP: Record<
   },
 };
 
-export async function GET() {
-  const session = await auth();
-  const companyId = (session?.user as { companyId?: string } | undefined)
-    ?.companyId;
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const { token, account: rawAccount } =
-      await getMetaCredentials(companyId);
-    if (!token || !rawAccount) {
-      return NextResponse.json({ campaigns: [] });
-    }
-    const account = rawAccount.startsWith("act_")
-      ? rawAccount
-      : `act_${rawAccount}`;
+async function fetchCampaignsForAccount(token: string, rawAccount: string) {
+  const account = rawAccount.startsWith("act_")
+    ? rawAccount
+    : `act_${rawAccount}`;
 
     // Fetch campaigns with insights
     const insightFields = [
@@ -206,10 +193,10 @@ export async function GET() {
     const url = `https://graph.facebook.com/v21.0/${account}/campaigns?${params.toString()}`;
 
     const res = await fetch(url, { next: { revalidate: 300 } });
-    if (!res.ok) return NextResponse.json({ campaigns: [] });
+    if (!res.ok) return [];
 
     const json = await res.json();
-    if (json.error) return NextResponse.json({ campaigns: [] });
+    if (json.error) return [];
 
     const campaigns = (json.data ?? []).map((c: Record<string, unknown>) => {
       const insight = (
@@ -225,6 +212,8 @@ export async function GET() {
       const costPerActionType: { action_type: string; value: string }[] =
         (insight?.cost_per_action_type as { action_type: string; value: string }[] | undefined) ?? [];
 
+      // Meta reporta el MISMO lead bajo varios action_type a la vez — sumarlos
+      // duplica el conteo. Se toma el máximo entre los tipos candidatos.
       const leads = actions
         .filter((a) =>
           [
@@ -233,7 +222,7 @@ export async function GET() {
             "offsite_conversion.fb_pixel_lead",
           ].includes(a.action_type)
         )
-        .reduce((s, a) => s + parseFloat(a.value ?? "0"), 0);
+        .reduce((max, a) => Math.max(max, parseFloat(a.value ?? "0")), 0);
 
       const spend = parseFloat((insight?.spend as string | undefined) ?? "0");
 
@@ -269,7 +258,7 @@ export async function GET() {
           .filter((a) =>
             ["purchase", "offsite_conversion.fb_pixel_purchase"].includes(a.action_type)
           )
-          .reduce((s, a) => s + parseFloat(a.value ?? "0"), 0);
+          .reduce((max, a) => Math.max(max, parseFloat(a.value ?? "0")), 0);
         const purchaseValue = actionValues
           .filter((a) => a.action_type === "purchase")
           .reduce((s, a) => s + parseFloat(a.value ?? "0"), 0);
@@ -367,6 +356,37 @@ export async function GET() {
         hasMixedObjectives,
       };
     });
+
+    return campaigns;
+}
+
+export async function GET(req: NextRequest) {
+  const session = await auth();
+  const companyId = (session?.user as { companyId?: string } | undefined)
+    ?.companyId;
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const accountId = new URL(req.url).searchParams.get("account_id") || undefined;
+
+    if (accountId) {
+      const { token, account } = await getMetaCredentials(companyId, accountId);
+      if (!token || !account) return NextResponse.json({ campaigns: [] });
+      const campaigns = await fetchCampaignsForAccount(token, account);
+      return NextResponse.json({ campaigns });
+    }
+
+    const accounts = await getAllMetaAdAccounts(companyId);
+    if (accounts.length === 0) return NextResponse.json({ campaigns: [] });
+
+    const results = await Promise.allSettled(
+      accounts.map((a) => fetchCampaignsForAccount(a.accessToken, a.accountId))
+    );
+    const campaigns = results
+      .filter((r): r is PromiseFulfilledResult<any[]> => r.status === "fulfilled")
+      .flatMap((r) => r.value);
 
     return NextResponse.json({ campaigns });
   } catch {

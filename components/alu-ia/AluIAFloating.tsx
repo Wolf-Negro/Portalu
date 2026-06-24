@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { X, Zap, Send, MessageSquare } from "lucide-react";
+import { X, Send } from "lucide-react";
+import { AluCharacter, AluAvatar, ALU_CHARACTER_STYLES, type AluMode } from "./AluCharacter";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -18,6 +19,7 @@ export default function AluIAFloating() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [aluMode, setAluMode] = useState<AluMode>("idle");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,6 +36,7 @@ export default function AluIAFloating() {
     setMessages((prev) => [...prev, { role: "user", content: text }]);
     setInput("");
     setLoading(true);
+    setAluMode("thinking");
     setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
     try {
       const res = await fetch("/api/alu-ia/chat", {
@@ -70,11 +73,14 @@ export default function AluIAFloating() {
           }
         }
       }
+      setAluMode("responding");
+      setTimeout(() => setAluMode("idle"), 600);
     } catch {
       setMessages((prev) => [
         ...prev.slice(0, -1),
         { role: "assistant", content: "Error al conectar con ALU.IA. Intenta de nuevo." },
       ]);
+      setAluMode("idle");
     } finally {
       setLoading(false);
     }
@@ -89,6 +95,7 @@ export default function AluIAFloating() {
 
   return (
     <>
+      <style>{ALU_CHARACTER_STYLES}</style>
       <style>{`
         @keyframes aluFloatingSlideIn {
           from { transform: translateX(100%); opacity: 0; }
@@ -108,18 +115,12 @@ export default function AluIAFloating() {
         >
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "18px 20px", borderBottom: "1px solid rgba(114,85,180,0.2)",
+            padding: "14px 20px", borderBottom: "1px solid rgba(114,85,180,0.2)",
             background: "linear-gradient(135deg,rgba(43,9,111,0.4),rgba(114,85,180,0.15))",
             flexShrink: 0,
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{
-                width: 34, height: 34, borderRadius: 10,
-                background: "linear-gradient(135deg,var(--color-violet-dim),var(--color-lavender))",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <Zap size={16} color="#fff" />
-              </div>
+              <AluAvatar size={32} />
               <div style={{ fontSize: 14, fontWeight: 700, color: "var(--color-text-primary)" }}>ALU.IA</div>
             </div>
             <button
@@ -137,9 +138,10 @@ export default function AluIAFloating() {
               </div>
             )}
             {messages.map((msg, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
+              <div key={i} style={{ display: "flex", gap: 8, justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                {msg.role === "assistant" && <AluAvatar size={28} />}
                 <div style={{
-                  maxWidth: "82%", padding: "9px 13px", borderRadius: 12,
+                  maxWidth: "78%", padding: "9px 13px", borderRadius: 12,
                   background: msg.role === "user"
                     ? "linear-gradient(135deg,var(--color-violet-dim),var(--color-lavender))"
                     : "rgba(255,255,255,0.06)",
@@ -152,7 +154,8 @@ export default function AluIAFloating() {
               </div>
             ))}
             {loading && (
-              <div style={{ display: "flex", justifyContent: "flex-start" }}>
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-start" }}>
+                <AluAvatar size={28} />
                 <div style={{
                   padding: "9px 13px", borderRadius: 12,
                   background: "rgba(255,255,255,0.06)", border: "1px solid rgba(114,85,180,0.2)",
@@ -196,26 +199,16 @@ export default function AluIAFloating() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
+          title="Hablar con ALU.IA"
           style={{
-            position: "fixed", bottom: 24, right: 24, zIndex: 99,
-            height: 52, borderRadius: 26, paddingLeft: 18, paddingRight: 18,
-            border: "none", cursor: "pointer",
-            background: "linear-gradient(135deg,var(--color-violet-dim),var(--color-lavender))",
-            display: "flex", alignItems: "center", gap: 9,
-            boxShadow: "0 6px 24px rgba(43,9,111,0.5)",
-            transition: "transform 0.15s, box-shadow 0.15s",
+            position: "fixed", bottom: 16, right: 16, zIndex: 99,
+            border: "none", background: "none", cursor: "pointer", padding: 0,
+            transition: "transform 0.15s",
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 10px 30px rgba(43,9,111,0.65)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "0 6px 24px rgba(43,9,111,0.5)";
-          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
         >
-          <MessageSquare size={18} color="#fff" />
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>ALU.IA</span>
+          <AluCharacter size={64} mode={aluMode} />
         </button>
       )}
     </>

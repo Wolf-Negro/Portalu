@@ -48,9 +48,9 @@ export default function QRScreen() {
           <div className="flex flex-col items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mb-4" />
             <p className="text-gray-600">
-              {data.status === "connecting" ? "Iniciando conexión..." : "Esperando QR de WhatsApp..."}
+              {data.status === "connecting" ? "Iniciando conexión..." : "Generando código QR..."}
             </p>
-            <p className="text-xs text-gray-400 mt-2">Asegúrate de correr: <code className="bg-gray-100 px-1 rounded">npm run dev</code></p>
+            <p className="text-xs text-gray-400 mt-2">Esto puede tardar unos segundos.</p>
           </div>
         ) : (
           <div className="py-12">

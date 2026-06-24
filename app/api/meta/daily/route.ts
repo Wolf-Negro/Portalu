@@ -10,9 +10,10 @@ export async function GET(req: NextRequest) {
   if ((session.user as any).role === "asesor") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const companyId = (session.user as any).companyId as string | undefined;
-  const { token: TOKEN } = await getMetaCredentials(companyId);
-
   const { searchParams } = new URL(req.url);
+  const accountId = searchParams.get("account_id") || undefined;
+  const { token: TOKEN } = await getMetaCredentials(companyId, accountId);
+
   const campaignId = searchParams.get("campaign_id");
   const since = searchParams.get("since");
   const until = searchParams.get("until");

@@ -9,7 +9,8 @@ import {
   AreaChart, Area, BarChart, Bar,
   XAxis as RechartsXAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { X, Zap, Send, MessageSquare } from "lucide-react";
+import { X, Zap, Send } from "lucide-react";
+import { AluCharacter, AluAvatar, ALU_CHARACTER_STYLES, type AluMode } from "@/components/alu-ia/AluCharacter";
 import Link from "next/link";
 import { ErrorState } from "@/components/ui/error-state";
 import { ChartSkeleton } from "@/components/ui/skeleton";
@@ -24,6 +25,7 @@ interface MetaData {
   ctr: number; cpc: number; cpm: number; frequency: number;
   videoViews: number; videoP25: number; videoP50: number; videoP75: number; videoP100: number;
   postEngagement: number; postReactions: number; postComments: number; postShares: number;
+  messages: number;
   cpl: number; roas: number; costPerLandingPageView: number;
 }
 
@@ -96,11 +98,13 @@ interface Props {
   teamData: { name: string; role: string; leads: number; converted: number; convRate: number }[];
   weeklySummary: any;
   userName: string;
+  companyName?: string | null;
   metaToday?: MetaData | null;
   metaMonthly?: MetaData | null;
   metaYesterday?: MetaData | null;
   metaError?: boolean;
   metaConfigured?: boolean;
+  metaAccounts?: { accountId: string; label: string | null }[];
   dashboardConfigured: boolean;
   hasCRM: boolean;
 }
@@ -150,6 +154,7 @@ const METRIC_CATALOG: MetricConfig[] = [
   { id: "postReactions",    label: "Reacciones",         group: "Interacciones",  format: "number",   description: "Likes, love, wow, etc.",                         color: "var(--color-coral)", icon: "👍" },
   { id: "postComments",     label: "Comentarios",        group: "Interacciones",  format: "number",   description: "Comentarios en la publicación",                  color: "var(--color-violet-soft)", icon: "💬" },
   { id: "postShares",       label: "Compartidos",        group: "Interacciones",  format: "number",   description: "Veces que se compartió el anuncio",              color: "#1877f2", icon: "🔁" },
+  { id: "messages",         label: "Mensajes",           group: "Interacciones",  format: "number",   description: "Conversaciones iniciadas por mensaje",           color: "#25d366", icon: "💬" },
 ];
 
 // ─── Default items ────────────────────────────────────────────────────────────
@@ -572,12 +577,46 @@ function CampaignComparisonContent({ campaigns, error, onRetry }: { campaigns: C
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function DashboardClient({
-  stats, preferences, userName, metaToday, metaMonthly, metaYesterday,
-  metaError, metaConfigured,
+  stats, preferences, userName, companyName, metaToday: initialMetaToday, metaMonthly: initialMetaMonthly, metaYesterday: initialMetaYesterday,
+  metaError: initialMetaError, metaConfigured,
+  metaAccounts = [],
   dashboardConfigured,
 }: Props) {
 
   const { showToast } = useToast();
+
+  // ── Selector de cuenta publicitaria de Meta ────────────────────────────────
+  // null = combinado (todas las cuentas). Los valores iniciales vienen del
+  // servidor ya combinados; al elegir una cuenta específica se refetchea.
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [accountSelectorOpen, setAccountSelectorOpen] = useState(false);
+  const [metaToday, setMetaToday] = useState<MetaData | null | undefined>(initialMetaToday);
+  const [metaMonthly, setMetaMonthly] = useState<MetaData | null | undefined>(initialMetaMonthly);
+  const [metaYesterday, setMetaYesterday] = useState<MetaData | null | undefined>(initialMetaYesterday);
+  const [metaError, setMetaError] = useState<boolean | undefined>(initialMetaError);
+  const [metaSummaryLoading, setMetaSummaryLoading] = useState(false);
+
+  useEffect(() => {
+    if (selectedAccountId === null) {
+      setMetaToday(initialMetaToday);
+      setMetaMonthly(initialMetaMonthly);
+      setMetaYesterday(initialMetaYesterday);
+      setMetaError(initialMetaError);
+      return;
+    }
+    setMetaSummaryLoading(true);
+    fetch(`/api/dashboard/meta-summary?account_id=${selectedAccountId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        setMetaToday(d.metaToday ?? null);
+        setMetaMonthly(d.metaMonthly ?? null);
+        setMetaYesterday(d.metaYesterday ?? null);
+        setMetaError(!!d.metaError);
+      })
+      .catch(() => setMetaError(true))
+      .finally(() => setMetaSummaryLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAccountId]);
 
   // ── Items state ────────────────────────────────────────────────────────────
   const [items, setItems] = useState<DashboardItem[]>(() => parseInitialItems(preferences));
@@ -607,7 +646,8 @@ export default function DashboardClient({
     setCustomRangeLoading(true);
     setCustomRangeError(null);
     try {
-      const res = await fetch(`/api/dashboard/meta-range?since=${customSince}&until=${customUntil}`);
+      const accountParam = selectedAccountId ? `&account_id=${selectedAccountId}` : "";
+      const res = await fetch(`/api/dashboard/meta-range?since=${customSince}&until=${customUntil}${accountParam}`);
       const d = await res.json();
       if (d.error || d.message) {
         setCustomRangeError(d.error ?? d.message);
@@ -623,6 +663,7 @@ export default function DashboardClient({
         videoViews: toNum(d.videoViews), videoP25: 0, videoP50: 0, videoP75: 0, videoP100: 0,
         postEngagement: toNum(d.postEngagement), postReactions: toNum(d.postReactions),
         postComments: toNum(d.postComments), postShares: toNum(d.postShares),
+        messages: toNum(d.messages),
         cpl: toNum(d.cpl), roas: toNum(d.roas), costPerLandingPageView: toNum(d.costPerLandingPageView),
       });
     } catch {
@@ -653,7 +694,8 @@ export default function DashboardClient({
   // ── Fetch campaigns ────────────────────────────────────────────────────────
   const loadCampaigns = () => {
     setCampaignsError(false);
-    fetch("/api/dashboard/campaigns")
+    const accountParam = selectedAccountId ? `?account_id=${selectedAccountId}` : "";
+    fetch(`/api/dashboard/campaigns${accountParam}`)
       .then((r) => { if (!r.ok) throw new Error("Error"); return r.json(); })
       .then((d) => setCampaigns(d.campaigns ?? []))
       .catch(() => setCampaignsError(true));
@@ -661,7 +703,8 @@ export default function DashboardClient({
 
   useEffect(() => {
     loadCampaigns();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAccountId]);
 
   // ── Fetch campaign-level meta data when a campaign is selected ─────────────
   useEffect(() => {
@@ -675,7 +718,7 @@ export default function DashboardClient({
       "spend","reach","impressions","clicks","linkClicks","outboundClicks",
       "landingPageViews","leads","purchases","purchaseValue","ctr","cpc","cpm",
       "frequency","videoViews","postEngagement","postReactions","postComments",
-      "postShares","cpl","roas","costPerLandingPageView",
+      "postShares","messages","cpl","roas","costPerLandingPageView",
     ].join(",");
 
     fetch(`/api/dashboard/meta-chart?metrics=${allMetrics}&period=today&breakdown=account&campaign_id=${selectedCampaign.id}`)
@@ -708,6 +751,7 @@ export default function DashboardClient({
             postReactions: toNum(row.postReactions),
             postComments: toNum(row.postComments),
             postShares: toNum(row.postShares),
+            messages: toNum(row.messages),
             cpl: toNum(row.cpl),
             roas: toNum(row.roas),
             costPerLandingPageView: toNum(row.costPerLandingPageView),
@@ -769,6 +813,7 @@ export default function DashboardClient({
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [aluMode, setAluMode] = useState<AluMode>("idle");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // ── Onboarding state ──────────────────────────────────────────────────────
@@ -897,6 +942,7 @@ export default function DashboardClient({
     setChatMessages((prev) => [...prev, { role: "user", content: text }]);
     setChatInput("");
     setChatLoading(true);
+    setAluMode("thinking");
     setChatMessages((prev) => [...prev, { role: "assistant", content: "" }]);
     try {
       const bodyPayload: Record<string, unknown> = { message: text, context: "dashboard", stats };
@@ -937,11 +983,14 @@ export default function DashboardClient({
         }
       }
       applyCommands(fullReply);
+      setAluMode("responding");
+      setTimeout(() => setAluMode("idle"), 600);
     } catch {
       setChatMessages((prev) => [
         ...prev.slice(0, -1),
         { role: "assistant", content: "Error al conectar con ALU.IA. Intenta de nuevo." },
       ]);
+      setAluMode("idle");
     } finally {
       setChatLoading(false);
     }
@@ -990,6 +1039,7 @@ export default function DashboardClient({
   return (
     <>
       {/* ── Global animations ── */}
+      <style>{ALU_CHARACTER_STYLES}</style>
       <style>{`
         @keyframes cardPulse {
           0%, 100% { box-shadow: 0 0 24px rgba(114,85,180,0.2); }
@@ -1400,13 +1450,7 @@ export default function DashboardClient({
             flexShrink: 0,
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{
-                width: 34, height: 34, borderRadius: 10,
-                background: "linear-gradient(135deg,var(--color-violet-dim),var(--color-lavender))",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <Zap size={16} color="#fff" />
-              </div>
+              <AluAvatar size={32} />
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: "var(--color-text-primary)" }}>ALU.IA Dashboard</div>
                 <div style={{ fontSize: 10.5, color: "var(--color-lavender)" }}>Asistente de métricas</div>
@@ -1442,9 +1486,10 @@ export default function DashboardClient({
               </div>
             )}
             {chatMessages.map((msg, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
+              <div key={i} style={{ display: "flex", gap: 8, justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                {msg.role === "assistant" && <AluAvatar size={28} />}
                 <div style={{
-                  maxWidth: "82%", padding: "9px 13px", borderRadius: 12,
+                  maxWidth: "78%", padding: "9px 13px", borderRadius: 12,
                   background: msg.role === "user"
                     ? "linear-gradient(135deg,var(--color-violet-dim),var(--color-lavender))"
                     : "rgba(255,255,255,0.06)",
@@ -1459,7 +1504,8 @@ export default function DashboardClient({
               </div>
             ))}
             {chatLoading && (
-              <div style={{ display: "flex", justifyContent: "flex-start" }}>
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-start" }}>
+                <AluAvatar size={28} />
                 <div style={{
                   padding: "9px 13px", borderRadius: 12, borderBottomLeftRadius: 4,
                   background: "rgba(255,255,255,0.06)", border: "1px solid rgba(114,85,180,0.2)",
@@ -1505,26 +1551,16 @@ export default function DashboardClient({
       {!aluIaOpen && (
         <button
           onClick={() => setAluIaOpen(true)}
+          title="Hablar con ALU.IA"
           style={{
-            position: "fixed", bottom: 24, right: 24, zIndex: 99,
-            height: 52, borderRadius: 26, paddingLeft: 18, paddingRight: 18,
-            border: "none", cursor: "pointer",
-            background: "linear-gradient(135deg,var(--color-violet-dim),var(--color-lavender))",
-            display: "flex", alignItems: "center", gap: 9,
-            boxShadow: "0 6px 24px rgba(43,9,111,0.5)",
-            transition: "transform 0.15s, box-shadow 0.15s",
+            position: "fixed", bottom: 16, right: 16, zIndex: 99,
+            border: "none", background: "none", cursor: "pointer", padding: 0,
+            transition: "transform 0.15s",
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 10px 30px rgba(43,9,111,0.65)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "0 6px 24px rgba(43,9,111,0.5)";
-          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
         >
-          <MessageSquare size={18} color="#fff" />
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>ALU.IA</span>
+          <AluCharacter size={64} mode={aluMode} />
         </button>
       )}
 
@@ -1566,7 +1602,7 @@ export default function DashboardClient({
         }}>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--color-text-primary)", margin: 0, letterSpacing: "-0.03em" }}>
-              Hola, {userName.split(" ")[0]} 👋
+              Hola, {companyName || userName.split(" ")[0]} 👋
             </h1>
             <p style={{ fontSize: 12.5, color: "var(--color-text-faint)", margin: "4px 0 0" }}>
               {currentDateTime || " "}
@@ -1605,6 +1641,73 @@ export default function DashboardClient({
             {saving && <span style={{ fontSize: 10.5, color: "var(--color-lavender)" }}>Guardando...</span>}
             {campaignMetaLoading && (
               <span style={{ fontSize: 10.5, color: "var(--color-lavender)" }}>Cargando campaña...</span>
+            )}
+            {metaSummaryLoading && (
+              <span style={{ fontSize: 10.5, color: "var(--color-lavender)" }}>Cargando cuenta...</span>
+            )}
+
+            {/* Account filter (solo si hay 2+ cuentas de Meta) */}
+            {metaAccounts.length > 1 && (
+              <div style={{ position: "relative" }}>
+                <button
+                  onClick={() => setAccountSelectorOpen((v) => !v)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    background: selectedAccountId ? "rgba(114,85,180,0.15)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${selectedAccountId ? "rgba(114,85,180,0.5)" : "rgba(114,85,180,0.2)"}`,
+                    borderRadius: 8, padding: "5px 12px", cursor: "pointer",
+                    color: selectedAccountId ? "var(--color-text-primary)" : "var(--color-text-faint)", fontSize: 12,
+                  }}
+                >
+                  <span>🏢</span>
+                  <span style={{ maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {selectedAccountId
+                      ? (metaAccounts.find((a) => a.accountId === selectedAccountId)?.label || selectedAccountId)
+                      : "Todas las cuentas"}
+                  </span>
+                  <span style={{ fontSize: 9, color: "var(--color-text-muted)" }}>▼</span>
+                </button>
+
+                {accountSelectorOpen && (
+                  <>
+                    <div onClick={() => setAccountSelectorOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 59 }} />
+                    <div style={{
+                      position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 60,
+                      background: "var(--color-surface-2)", border: "1px solid rgba(114,85,180,0.3)",
+                      borderRadius: 12, padding: 8, minWidth: 220,
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.5)", maxHeight: 320, overflowY: "auto",
+                    }}>
+                      <button
+                        onClick={() => { setSelectedAccountId(null); setAccountSelectorOpen(false); }}
+                        style={{
+                          width: "100%", textAlign: "left", padding: "8px 10px",
+                          background: !selectedAccountId ? "rgba(114,85,180,0.15)" : "none",
+                          border: "none", borderRadius: 8, cursor: "pointer",
+                          color: !selectedAccountId ? "var(--color-text-primary)" : "var(--color-text-secondary)", fontSize: 12, marginBottom: 4,
+                        }}
+                      >
+                        <span>🏢</span> <strong>Todas las cuentas</strong>
+                        <div style={{ fontSize: 10.5, color: "var(--color-text-muted)", marginTop: 1, paddingLeft: 18 }}>Combinadas</div>
+                      </button>
+                      {metaAccounts.map((a) => (
+                        <button
+                          key={a.accountId}
+                          onClick={() => { setSelectedAccountId(a.accountId); setAccountSelectorOpen(false); }}
+                          style={{
+                            width: "100%", textAlign: "left", padding: "8px 10px",
+                            background: selectedAccountId === a.accountId ? "rgba(114,85,180,0.15)" : "none",
+                            border: "none", borderRadius: 8, cursor: "pointer",
+                            color: "var(--color-text-secondary)", fontSize: 12, marginBottom: 2,
+                          }}
+                        >
+                          <div style={{ color: "var(--color-text-primary)" }}>{a.label || a.accountId}</div>
+                          <div style={{ fontSize: 10.5, color: "var(--color-text-muted)" }}>{a.accountId}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             )}
 
             {/* Campaign filter */}

@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import DashboardClient from "./DashboardClient";
-import { getMetaCredentials } from "@/lib/meta-credentials";
+import { getMetaCredentials, getAllMetaAdAccounts } from "@/lib/meta-credentials";
 
 // ─── MetaData interface ────────────────────────────────────────────────────────
 
@@ -29,6 +29,7 @@ export interface MetaData {
   postReactions: number;
   postComments: number;
   postShares: number;
+  messages: number;
   // computed
   cpl: number;
   roas: number;
@@ -66,13 +67,12 @@ interface MetaFetchResult {
   status: "ok" | "no_credentials" | "error";
 }
 
-async function fetchMetaFull(
-  companyId: string | undefined,
+async function fetchOneAccountFull(
+  token: string,
+  rawAccount: string,
   period: "today" | "last_7d" | "last_30d" | "yesterday"
-): Promise<MetaFetchResult> {
+): Promise<MetaData | null> {
   try {
-    const { token, account: rawAccount } = await getMetaCredentials(companyId);
-    if (!token || !rawAccount) return { data: null, status: "no_credentials" };
     const account = rawAccount.startsWith("act_") ? rawAccount : `act_${rawAccount}`;
 
     const fields = [
@@ -106,11 +106,11 @@ async function fetchMetaFull(
         ? { cache: "no-store" as const }
         : { next: { revalidate: 300 } };
     const res = await fetch(url, fetchOptions);
-    if (!res.ok) return { data: null, status: "error" };
+    if (!res.ok) return null;
     const json = await res.json();
-    if (json.error) return { data: null, status: "error" };
+    if (json.error) return null;
     const data = json?.data?.[0];
-    if (!data) return { data: null, status: "ok" };
+    if (!data) return null;
 
     const actions: { action_type: string; value: string }[] =
       (data.actions as { action_type: string; value: string }[] | undefined) ?? [];
@@ -134,6 +134,7 @@ async function fetchMetaFull(
     const postReactions = sumActions(actions, ["post_reaction", "like"]);
     const postComments = sumActions(actions, ["comment"]);
     const postShares = sumActions(actions, ["post"]);
+    const messages = sumActions(actions, ["onsite_conversion.messaging_conversation_started_7d"]);
 
     const outboundClicks = parseFloat(
       (data.outbound_clicks as { value: string }[] | undefined)?.[0]?.value ?? "0"
@@ -157,36 +158,108 @@ async function fetchMetaFull(
     const costPerLandingPageView = landingPageViews > 0 ? spend / landingPageViews : 0;
 
     return {
-      data: {
-        spend,
-        reach: parseInt(data.reach ?? "0", 10),
-        impressions: parseInt(data.impressions ?? "0", 10),
-        clicks: parseInt(data.clicks ?? "0", 10),
-        linkClicks,
-        outboundClicks,
-        landingPageViews,
-        leads,
-        purchases,
-        purchaseValue,
-        ctr: parseFloat(data.ctr ?? "0"),
-        cpc: parseFloat(data.cpc ?? "0"),
-        cpm: parseFloat(data.cpm ?? "0"),
-        frequency: parseFloat(data.frequency ?? "0"),
-        videoViews,
-        videoP25,
-        videoP50,
-        videoP75,
-        videoP100,
-        postEngagement,
-        postReactions,
-        postComments,
-        postShares,
-        cpl,
-        roas,
-        costPerLandingPageView,
-      },
-      status: "ok",
+      spend,
+      reach: parseInt(data.reach ?? "0", 10),
+      impressions: parseInt(data.impressions ?? "0", 10),
+      clicks: parseInt(data.clicks ?? "0", 10),
+      linkClicks,
+      outboundClicks,
+      landingPageViews,
+      leads,
+      purchases,
+      purchaseValue,
+      ctr: parseFloat(data.ctr ?? "0"),
+      cpc: parseFloat(data.cpc ?? "0"),
+      cpm: parseFloat(data.cpm ?? "0"),
+      frequency: parseFloat(data.frequency ?? "0"),
+      videoViews,
+      videoP25,
+      videoP50,
+      videoP75,
+      videoP100,
+      postEngagement,
+      postReactions,
+      postComments,
+      postShares,
+      messages,
+      cpl,
+      roas,
+      costPerLandingPageView,
     };
+  } catch {
+    return null;
+  }
+}
+
+// Suma las métricas de varias cuentas publicitarias (modo "combinado") y
+// recalcula las tasas a partir de los totales en vez de promediarlas.
+function aggregateMetaData(list: MetaData[]): MetaData {
+  const sum = (key: keyof MetaData) => list.reduce((acc, m) => acc + (m[key] as number), 0);
+  const spend = sum("spend");
+  const clicks = sum("clicks");
+  const impressions = sum("impressions");
+  const leads = sum("leads");
+  const purchaseValue = sum("purchaseValue");
+  const landingPageViews = sum("landingPageViews");
+
+  return {
+    spend,
+    reach: sum("reach"),
+    impressions,
+    clicks,
+    linkClicks: sum("linkClicks"),
+    outboundClicks: sum("outboundClicks"),
+    landingPageViews,
+    leads,
+    purchases: sum("purchases"),
+    purchaseValue,
+    ctr: impressions > 0 ? (clicks / impressions) * 100 : 0,
+    cpc: clicks > 0 ? spend / clicks : 0,
+    cpm: impressions > 0 ? (spend / impressions) * 1000 : 0,
+    frequency: list.length > 0 ? list.reduce((acc, m) => acc + m.frequency, 0) / list.length : 0,
+    videoViews: sum("videoViews"),
+    videoP25: sum("videoP25"),
+    videoP50: sum("videoP50"),
+    videoP75: sum("videoP75"),
+    videoP100: sum("videoP100"),
+    postEngagement: sum("postEngagement"),
+    postReactions: sum("postReactions"),
+    postComments: sum("postComments"),
+    postShares: sum("postShares"),
+    messages: sum("messages"),
+    cpl: leads > 0 ? spend / leads : 0,
+    roas: spend > 0 ? purchaseValue / spend : 0,
+    costPerLandingPageView: landingPageViews > 0 ? spend / landingPageViews : 0,
+  };
+}
+
+/** Sin `accountId`, combina todas las cuentas publicitarias de la empresa. */
+async function fetchMetaFull(
+  companyId: string | undefined,
+  period: "today" | "last_7d" | "last_30d" | "yesterday",
+  accountId?: string
+): Promise<MetaFetchResult> {
+  try {
+    if (accountId) {
+      const { token, account } = await getMetaCredentials(companyId, accountId);
+      if (!token || !account) return { data: null, status: "no_credentials" };
+      const data = await fetchOneAccountFull(token, account, period);
+      return { data, status: data ? "ok" : "error" };
+    }
+
+    const accounts = await getAllMetaAdAccounts(companyId);
+    if (accounts.length === 0) return { data: null, status: "no_credentials" };
+
+    const results = await Promise.allSettled(
+      accounts.map((a) => fetchOneAccountFull(a.accessToken, a.accountId, period))
+    );
+    const dataList = results
+      .filter((r): r is PromiseFulfilledResult<MetaData | null> => r.status === "fulfilled")
+      .map((r) => r.value)
+      .filter((d): d is MetaData => d !== null);
+
+    if (dataList.length === 0) return { data: null, status: "ok" };
+    return { data: aggregateMetaData(dataList), status: "ok" };
   } catch {
     return { data: null, status: "error" };
   }
@@ -254,10 +327,13 @@ export default async function DashboardPage() {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { preferences: true, name: true } as any,
-  });
+  const [dbUser, company] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { preferences: true, name: true } as any,
+    }),
+    companyId ? prisma.company.findUnique({ where: { id: companyId }, select: { name: true } }) : null,
+  ]);
 
   const preferences = (dbUser as any)?.preferences
     ? JSON.parse((dbUser as any).preferences)
@@ -346,10 +422,11 @@ export default async function DashboardPage() {
 
   const hasCRM = totalLeads > 0 || opportunities.length > 0;
 
-  const [metaTodayResult, metaMonthlyResult, metaYesterdayResult] = await Promise.all([
+  const [metaTodayResult, metaMonthlyResult, metaYesterdayResult, metaAccounts] = await Promise.all([
     fetchMetaFull(companyId, "today"),
     fetchMetaFull(companyId, "last_30d"),
     fetchMetaFull(companyId, "yesterday"),
+    getAllMetaAdAccounts(companyId),
   ]);
 
   const metaToday = metaTodayResult.data;
@@ -384,11 +461,13 @@ export default async function DashboardPage() {
         weekEnd: weeklySummary.weekEnd.toISOString(),
       } : null}
       userName={session?.user?.name || "Usuario"}
+      companyName={company?.name}
       metaToday={metaToday}
       metaMonthly={metaMonthly}
       metaYesterday={metaYesterday}
       metaError={metaError}
       metaConfigured={metaConfigured}
+      metaAccounts={metaAccounts.map((a) => ({ accountId: a.accountId, label: a.label }))}
       dashboardConfigured={preferences.dashboardConfigured ?? false}
       hasCRM={hasCRM}
     />

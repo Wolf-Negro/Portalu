@@ -1,8 +1,77 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getMetaCredentials } from "@/lib/meta-credentials";
+import { getMetaCredentials, getAllMetaAdAccounts } from "@/lib/meta-credentials";
 
 const META_API = "https://graph.facebook.com/v21.0";
+
+async function fetchOneAccountCampaigns(token: string, rawAccount: string, datePreset: string) {
+  // Meta exige el prefijo "act_" en el ID de cuenta; getMetaCredentials lo
+  // devuelve crudo — sin esto, el endpoint resuelve el nodo equivocado (#100).
+  const account = rawAccount.startsWith("act_") ? rawAccount : `act_${rawAccount}`;
+
+  // 1. Fetch campaigns
+  const campRes = await fetch(
+    `${META_API}/${account}/campaigns?fields=id,name,status,objective,daily_budget,lifetime_budget,start_time&limit=20&access_token=${token}`
+  );
+  const campData = await campRes.json();
+  if (campData.error) return [];
+
+  const campaigns = campData.data || [];
+
+  // 2. Fetch insights for each campaign in parallel (allSettled: un fallo
+  // puntual en una campaña no debe tumbar el refresco de las demás)
+  const settled = await Promise.allSettled(
+    campaigns.map(async (c: any) => {
+      const insRes = await fetch(
+        `${META_API}/${c.id}/insights?fields=spend,reach,impressions,clicks,actions,cost_per_action_type,ctr,cpm,cpp,frequency&date_preset=${datePreset}&access_token=${token}`
+      );
+      const insData = await insRes.json();
+      return { campaignId: c.id, insights: insData.data?.[0] || null };
+    })
+  );
+  const insightsResults = settled.map((r, i) =>
+    r.status === "fulfilled" ? r.value : { campaignId: campaigns[i].id, insights: null }
+  );
+
+  // 3. Merge campaigns with insights
+  return campaigns.map((c: any) => {
+    const ins = insightsResults.find((r) => r.campaignId === c.id)?.insights;
+    const leadActions = ins?.actions?.find((a: any) =>
+      ["lead", "onsite_conversion.lead_grouped", "offsite_conversion.fb_pixel_lead"].includes(a.action_type)
+    );
+    const landingViews = ins?.actions?.find((a: any) => a.action_type === "landing_page_view");
+    const linkClicks = ins?.actions?.find((a: any) => a.action_type === "link_click");
+    const videoViews = ins?.actions?.find((a: any) => a.action_type === "video_view");
+
+    const spend = parseFloat(ins?.spend || "0");
+    const leads = parseInt(leadActions?.value || "0");
+    const cpl = leads > 0 ? spend / leads : 0;
+    const ctr = parseFloat(ins?.ctr || "0");
+
+    return {
+      id: c.id,
+      name: c.name,
+      status: c.status === "ACTIVE" ? "active" : "paused",
+      objective: c.objective,
+      budget: parseFloat(c.daily_budget || c.lifetime_budget || "0") / 100,
+      spent: spend,
+      reach: parseInt(ins?.reach || "0"),
+      impressions: parseInt(ins?.impressions || "0"),
+      clicks: parseInt(ins?.clicks || "0"),
+      linkClicks: parseInt(linkClicks?.value || "0"),
+      landingViews: parseInt(landingViews?.value || "0"),
+      videoViews: parseInt(videoViews?.value || "0"),
+      leads,
+      cpl: Math.round(cpl * 100) / 100,
+      ctr: Math.round(ctr * 100) / 100,
+      cpm: Math.round(parseFloat(ins?.cpm || "0") * 100) / 100,
+      roas: 0,
+      frequency: Math.round(parseFloat(ins?.frequency || "0") * 100) / 100,
+      startDate: c.start_time,
+      hasFatigue: ctr > 0 && ctr < 1.5,
+    };
+  });
+}
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -10,86 +79,34 @@ export async function GET(req: NextRequest) {
   if ((session.user as any).role === "asesor") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const companyId = (session.user as any).companyId as string | undefined;
-  const { token: TOKEN, account: rawAccount } = await getMetaCredentials(companyId);
-
-  if (!TOKEN || TOKEN.startsWith("EAA...")) {
-    return NextResponse.json({ error: "META_ACCESS_TOKEN not configured" }, { status: 503 });
-  }
-  if (!rawAccount) {
-    return NextResponse.json({ error: "Meta Ads no está configurado para esta empresa" }, { status: 503 });
-  }
-  // Meta exige el prefijo "act_" en el ID de cuenta; getMetaCredentials lo
-  // devuelve crudo — sin esto, el endpoint resuelve el nodo equivocado (#100).
-  const ACCOUNT = rawAccount.startsWith("act_") ? rawAccount : `act_${rawAccount}`;
 
   try {
     const { searchParams } = new URL(req.url);
     const datePreset = searchParams.get("date_preset") || "last_30d";
+    const accountId = searchParams.get("account_id") || undefined;
 
-    // 1. Fetch campaigns
-    const campRes = await fetch(
-      `${META_API}/${ACCOUNT}/campaigns?fields=id,name,status,objective,daily_budget,lifetime_budget,start_time&limit=20&access_token=${TOKEN}`
+    if (accountId) {
+      const { token, account } = await getMetaCredentials(companyId, accountId);
+      if (!token || !account) {
+        return NextResponse.json({ error: "Meta Ads no está configurado para esta empresa" }, { status: 503 });
+      }
+      const campaigns = await fetchOneAccountCampaigns(token, account, datePreset);
+      return NextResponse.json({ campaigns, account: { id: account } });
+    }
+
+    const accounts = await getAllMetaAdAccounts(companyId);
+    if (accounts.length === 0) {
+      return NextResponse.json({ error: "Meta Ads no está configurado para esta empresa" }, { status: 503 });
+    }
+
+    const results = await Promise.allSettled(
+      accounts.map((a) => fetchOneAccountCampaigns(a.accessToken, a.accountId, datePreset))
     );
-    const campData = await campRes.json();
-    if (campData.error) return NextResponse.json({ error: campData.error.message }, { status: 400 });
+    const campaigns = results
+      .filter((r): r is PromiseFulfilledResult<any[]> => r.status === "fulfilled")
+      .flatMap((r) => r.value);
 
-    const campaigns = campData.data || [];
-
-    // 2. Fetch insights for each campaign in parallel (allSettled: un fallo
-    // puntual en una campaña no debe tumbar el refresco de las demás)
-    const settled = await Promise.allSettled(
-      campaigns.map(async (c: any) => {
-        const insRes = await fetch(
-          `${META_API}/${c.id}/insights?fields=spend,reach,impressions,clicks,actions,cost_per_action_type,ctr,cpm,cpp,frequency&date_preset=${datePreset}&access_token=${TOKEN}`
-        );
-        const insData = await insRes.json();
-        return { campaignId: c.id, insights: insData.data?.[0] || null };
-      })
-    );
-    const insightsResults = settled.map((r, i) =>
-      r.status === "fulfilled" ? r.value : { campaignId: campaigns[i].id, insights: null }
-    );
-
-    // 3. Merge campaigns with insights
-    const result = campaigns.map((c: any) => {
-      const ins = insightsResults.find((r) => r.campaignId === c.id)?.insights;
-      const leadActions = ins?.actions?.find((a: any) =>
-        ["lead", "onsite_conversion.lead_grouped", "offsite_conversion.fb_pixel_lead"].includes(a.action_type)
-      );
-      const landingViews = ins?.actions?.find((a: any) => a.action_type === "landing_page_view");
-      const linkClicks = ins?.actions?.find((a: any) => a.action_type === "link_click");
-      const videoViews = ins?.actions?.find((a: any) => a.action_type === "video_view");
-
-      const spend = parseFloat(ins?.spend || "0");
-      const leads = parseInt(leadActions?.value || "0");
-      const cpl = leads > 0 ? spend / leads : 0;
-      const ctr = parseFloat(ins?.ctr || "0");
-
-      return {
-        id: c.id,
-        name: c.name,
-        status: c.status === "ACTIVE" ? "active" : "paused",
-        objective: c.objective,
-        budget: parseFloat(c.daily_budget || c.lifetime_budget || "0") / 100,
-        spent: spend,
-        reach: parseInt(ins?.reach || "0"),
-        impressions: parseInt(ins?.impressions || "0"),
-        clicks: parseInt(ins?.clicks || "0"),
-        linkClicks: parseInt(linkClicks?.value || "0"),
-        landingViews: parseInt(landingViews?.value || "0"),
-        videoViews: parseInt(videoViews?.value || "0"),
-        leads,
-        cpl: Math.round(cpl * 100) / 100,
-        ctr: Math.round(ctr * 100) / 100,
-        cpm: Math.round(parseFloat(ins?.cpm || "0") * 100) / 100,
-        roas: 0,
-        frequency: Math.round(parseFloat(ins?.frequency || "0") * 100) / 100,
-        startDate: c.start_time,
-        hasFatigue: ctr > 0 && ctr < 1.5,
-      };
-    });
-
-    return NextResponse.json({ campaigns: result, account: { id: ACCOUNT } });
+    return NextResponse.json({ campaigns });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

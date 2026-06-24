@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { getSystemConfig } from "@/lib/system-config";
 import { auth } from "@/auth";
 import { fetchAccountMetrics, fetchCampaignsWithInsights, type MetaPeriod } from "@/lib/meta-insights";
+import { fetchLeadsSummary, fetchPipelineSummary, fetchWhatsAppSummary, type CrmPeriod } from "@/lib/crm-context";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -56,8 +57,18 @@ FUNCIONALIDADES DE PORTALU QUE DEBES CONOCER:
 
 Cuando el usuario pida ver un gráfico que ya existe en la plataforma, dirígelo al módulo correcto en lugar de decir que no puedes generarlo. Por ejemplo, si pide el gráfico de horas de leads, dile que vaya a Campañas y seleccione su campaña de generación de leads.
 
-DATOS REALES DE META ADS:
-Tienes herramientas para consultar datos REALES y actuales de la cuenta de Meta Ads del usuario (gasto, leads, CPL, alcance, impresiones, CTR, etc.), tanto de la cuenta completa como de campañas individuales por nombre. Úsalas SIEMPRE que el usuario pregunte por gasto, resultados, rendimiento o cualquier dato de sus campañas — nunca inventes ni estimes una cifra. Si la herramienta devuelve un error (por ejemplo, credenciales no configuradas) o no hay datos, dilo claramente al usuario en vez de aparentar que tienes el dato.`;
+DATOS REALES — TIENES HERRAMIENTAS, ÚSALAS SIEMPRE QUE APLIQUEN:
+- Meta Ads (gasto, leads, CPL, alcance, impresiones, CTR, etc., de toda la cuenta o por campaña).
+- Leads del CRM (totales, por estado, por origen, los más recientes).
+- Pipeline de ventas (oportunidades por etapa, valor del pipeline, cierres recientes).
+- Conversaciones de WhatsApp (totales, en modo IA vs atendidas por un humano, mensajes de hoy, recientes).
+Úsalas SIEMPRE que el usuario pregunte por cualquiera de estos temas — nunca inventes ni estimes una cifra. Si una herramienta devuelve un error (por ejemplo, credenciales no configuradas) o no hay datos, dilo claramente al usuario en vez de aparentar que tienes el dato. Aplica el mismo estilo breve y sin jerga (descrito arriba para Meta Ads) a TODAS estas respuestas, no solo a las de Meta Ads.
+
+CUÁNDO PEDIR ACLARACIÓN EN VEZ DE ADIVINAR:
+- "Leads" y "pipeline" pueden referirse a DOS cosas distintas en Portalu: (a) el módulo formal de Leads/Oportunidades del CRM, o (b) los leads/etapas del embudo de WhatsApp gestionado por el bot. Son fuentes de datos separadas y pueden tener números muy distintos.
+- Si la pregunta del usuario es ambigua sobre cuál de las dos fuentes le interesa (o sobre qué período, qué campaña o qué cuenta publicitaria se refiere) Y las dos fuentes dan resultados distintos o contradictorios, NO eligas una al azar y la presentes como si fuera la única respuesta correcta.
+- En ese caso, responde con el dato que sí tienes pero ACLARA explícitamente la fuente que usaste y pregunta si es lo que el usuario quería. Ejemplo: "En tus conversaciones de WhatsApp tienes 1 lead en la etapa 'Agendo Auditoría' hoy. Esto es del embudo de WhatsApp — ¿te referías a eso, o a leads registrados en el módulo Leads del CRM (ahí no hay ninguno)?"
+- Si de verdad no tienes ninguna pista de a qué se refiere (pregunta muy genérica o fuera de lo que cubren tus herramientas), pregunta directamente antes de responder en vez de asumir — es mejor una pregunta corta que una respuesta segura pero equivocada.`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Onboarding system prompt
@@ -112,7 +123,7 @@ OBJETIVOS: aumentar_leads, mejorar_cierre, reducir_cpl, escalar_equipo, mejorar_
 
 const VALID_PERIODS: MetaPeriod[] = ["today", "yesterday", "last_7d", "last_30d"];
 
-const META_TOOLS = [
+const PORTALU_TOOLS = [
   {
     type: "function",
     function: {
@@ -151,6 +162,55 @@ const META_TOOLS = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "get_leads_info",
+      description:
+        "Obtiene datos REALES de los leads registrados formalmente en el módulo Leads del CRM de Portalu: total histórico, nuevos en un período, desglose por estado y por origen, y los más recientes. OJO: muchas empresas gestionan sus leads exclusivamente por WhatsApp y nunca los registran aquí — si esta herramienta devuelve total histórico 0, usa también get_whatsapp_info antes de concluir que no hay leads.",
+      parameters: {
+        type: "object",
+        properties: {
+          status: {
+            type: "string",
+            description: "Filtrar por un estado específico de lead (opcional). Si no se especifica, devuelve todos.",
+          },
+          period: {
+            type: "string",
+            enum: ["today", "yesterday", "last_7d", "last_30d", "all"],
+            description: "Período para contar leads NUEVOS (campo nuevosEnPeriodo). 'all' por defecto si no se especifica.",
+          },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_pipeline_info",
+      description:
+        "Obtiene datos REALES del pipeline de ventas formal (modelo Opportunity) del CRM de Portalu: cantidad y valor por etapa, oportunidades nuevas en un período, valor total del pipeline abierto, y los cierres (ganados/perdidos) más recientes. Si el total histórico es 0, esta empresa probablemente gestiona su embudo de ventas vía WhatsApp — usa get_whatsapp_info (campo embudoLeadsWhatsApp) en ese caso.",
+      parameters: {
+        type: "object",
+        properties: {
+          period: {
+            type: "string",
+            enum: ["today", "yesterday", "last_7d", "last_30d", "all"],
+            description: "Período para contar oportunidades NUEVAS (campo nuevasEnPeriodo). 'all' por defecto si no se especifica.",
+          },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_whatsapp_info",
+      description:
+        "Obtiene datos REALES de las conversaciones de WhatsApp gestionadas por el bot de Portalu: total de conversaciones, cuántas están en modo IA vs atendidas por un humano, mensajes de hoy, el EMBUDO DE LEADS por etapa (campo embudoLeadsWhatsApp — cada conversación es un lead, agrupado por su etapa configurada: nuevo, precalificado, etc.), y las conversaciones más recientes con su etapa. Úsala cuando el usuario pregunte por WhatsApp, conversaciones, mensajes, o por leads/pipeline si get_leads_info / get_pipeline_info devuelven 0.",
+      parameters: { type: "object", properties: {} },
+    },
+  },
 ];
 
 interface ToolCallAccumulator {
@@ -159,7 +219,7 @@ interface ToolCallAccumulator {
   arguments: string;
 }
 
-async function executeMetaTool(
+async function executePortaluTool(
   name: string,
   args: Record<string, unknown>,
   companyId: string | undefined
@@ -173,6 +233,15 @@ async function executeMetaTool(
   }
   if (name === "list_campaigns") {
     return fetchCampaignsWithInsights(companyId, period);
+  }
+  if (name === "get_leads_info") {
+    return fetchLeadsSummary(companyId, args.status as string | undefined, args.period as CrmPeriod | undefined);
+  }
+  if (name === "get_pipeline_info") {
+    return fetchPipelineSummary(companyId, args.period as CrmPeriod | undefined);
+  }
+  if (name === "get_whatsapp_info") {
+    return fetchWhatsAppSummary(companyId);
   }
   return { error: "Herramienta desconocida." };
 }
@@ -418,7 +487,7 @@ export async function POST(req: NextRequest) {
     // ── 4. Stream response, ejecutando tool calls si el modelo las pide ────
 
     const encoder = new TextEncoder();
-    const tools = isOnboarding ? undefined : META_TOOLS;
+    const tools = isOnboarding ? undefined : PORTALU_TOOLS;
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -474,7 +543,7 @@ export async function POST(req: NextRequest) {
             for (const tc of toolCalls) {
               let args: Record<string, unknown> = {};
               try { args = JSON.parse(tc.arguments || "{}"); } catch { /* args vacíos */ }
-              const result = await executeMetaTool(tc.name, args, companyId);
+              const result = await executePortaluTool(tc.name, args, companyId);
               conversationMessages.push({
                 role: "tool",
                 tool_call_id: tc.id,

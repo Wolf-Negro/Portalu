@@ -82,6 +82,14 @@ export default function EditCompanyPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
+  // Cuentas publicitarias de Meta adicionales (la primaria vive en form.metaAdAccountId)
+  const [metaAccounts, setMetaAccounts] = useState<{ id: string; accountId: string; label: string | null }[]>([]);
+  const [newAccountId, setNewAccountId] = useState("");
+  const [newAccountLabel, setNewAccountLabel] = useState("");
+  const [newAccountToken, setNewAccountToken] = useState("");
+  const [addingAccount, setAddingAccount] = useState(false);
+  const [accountsError, setAccountsError] = useState("");
+
   // New user form
   const [showUserForm, setShowUserForm] = useState(false);
   const [newUser, setNewUser] = useState({ name: "", email: "", password: "", role: "asesor" });
@@ -113,7 +121,50 @@ export default function EditCompanyPage() {
         setLogoPreview(c.logo || null);
         setLoading(false);
       });
+    loadMetaAccounts();
   }, [id]);
+
+  function loadMetaAccounts() {
+    fetch(`/api/admin/companies/${id}/meta-accounts`)
+      .then((r) => r.json())
+      .then((d) => setMetaAccounts(d.accounts ?? []))
+      .catch(() => {});
+  }
+
+  async function handleAddMetaAccount(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newAccountId.trim()) return;
+    setAddingAccount(true);
+    setAccountsError("");
+    const res = await fetch(`/api/admin/companies/${id}/meta-accounts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        accountId: newAccountId.trim(),
+        label: newAccountLabel.trim() || undefined,
+        accessToken: newAccountToken.trim() || undefined,
+      }),
+    });
+    setAddingAccount(false);
+    if (res.ok) {
+      setNewAccountId("");
+      setNewAccountLabel("");
+      setNewAccountToken("");
+      loadMetaAccounts();
+    } else {
+      const d = await res.json().catch(() => ({}));
+      setAccountsError(d.error || "Error al agregar la cuenta");
+    }
+  }
+
+  async function handleRemoveMetaAccount(accountRowId: string) {
+    await fetch(`/api/admin/companies/${id}/meta-accounts`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accountRowId }),
+    });
+    loadMetaAccounts();
+  }
 
   function set(key: string, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -450,6 +501,79 @@ export default function EditCompanyPage() {
               </div>
             </Field>
           )}
+
+          <div style={{ marginTop: 22, paddingTop: 18, borderTop: "1px solid rgba(114,85,180,0.12)" }}>
+            <label style={LABEL_STYLE}>Cuentas publicitarias adicionales</label>
+            <p style={{ fontSize: 11.5, color: "var(--color-text-faint)", margin: "0 0 12px" }}>
+              Si esta empresa anuncia desde más de una cuenta de Meta Ads, agrégalas aquí. El Dashboard,
+              Campañas y ALU.IA combinarán los datos de todas automáticamente.
+            </p>
+
+            {metaAccounts.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+                {metaAccounts.map((a) => (
+                  <div
+                    key={a.id}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "8px 12px", borderRadius: 7,
+                      background: "rgba(255,255,255,0.02)", border: "1px solid rgba(114,85,180,0.12)",
+                    }}
+                  >
+                    <div style={{ fontSize: 12.5 }}>
+                      <span style={{ color: "var(--color-text-primary)", fontWeight: 600 }}>{a.label || "Sin nombre"}</span>
+                      <span style={{ color: "var(--color-text-faint)", marginLeft: 8, fontFamily: "monospace" }}>{a.accountId}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveMetaAccount(a.id)}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-muted)" }}
+                      title="Quitar cuenta"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1.4fr auto", gap: 8, alignItems: "start" }}>
+              <input
+                style={INPUT_STYLE}
+                value={newAccountId}
+                onChange={(e) => setNewAccountId(e.target.value)}
+                placeholder="ID de cuenta (sin act_)"
+              />
+              <input
+                style={INPUT_STYLE}
+                value={newAccountLabel}
+                onChange={(e) => setNewAccountLabel(e.target.value)}
+                placeholder="Nombre (opcional)"
+              />
+              <input
+                style={{ ...INPUT_STYLE, fontFamily: "monospace", fontSize: 12 }}
+                value={newAccountToken}
+                onChange={(e) => setNewAccountToken(e.target.value)}
+                placeholder="Token propio (opcional, usa el de la empresa si está vacío)"
+              />
+              <button
+                type="button"
+                onClick={handleAddMetaAccount}
+                disabled={addingAccount || !newAccountId.trim()}
+                style={{
+                  padding: "9px 16px", borderRadius: 7, border: "none", cursor: "pointer",
+                  background: "linear-gradient(135deg,var(--color-violet-dim),var(--color-lavender))",
+                  color: "#fff", fontSize: 12.5, fontWeight: 600,
+                  opacity: addingAccount || !newAccountId.trim() ? 0.5 : 1,
+                }}
+              >
+                + Agregar
+              </button>
+            </div>
+            {accountsError && (
+              <div style={{ fontSize: 11.5, color: "#f87171", marginTop: 6 }}>{accountsError}</div>
+            )}
+          </div>
         </div>
 
         {error && (

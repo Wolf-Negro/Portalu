@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
   }
 
   const companyId = (session.user as any).companyId as string | undefined;
-  const result = await fetchAccountMetricsRange(companyId, since, until);
+  const accountId = searchParams.get("account_id") || undefined;
+  const result = await fetchAccountMetricsRange(companyId, since, until, accountId);
 
   return NextResponse.json(result);
 }

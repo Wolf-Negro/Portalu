@@ -8,6 +8,7 @@ import makeWASocket, {
 import { Boom } from "@hapi/boom";
 import pino from "pino";
 import path from "path";
+import fs from "fs/promises";
 import { sql, upsertContactJid } from "../bot-db";
 import { messageHandler } from "./handler";
 import { getStoredMessage } from "../bot-message-queue";
@@ -92,8 +93,17 @@ export async function startSessionFor(companyId: string): Promise<WASocket> {
       console.log(`[baileys:${companyId}] Conexión cerrada — código: ${statusCode ?? "desconocido"}`);
 
       if (isLoggedOut) {
-        console.log(`[baileys:${companyId}] Sesión cerrada (loggedOut). Reiniciando para QR...`);
+        console.log(`[baileys:${companyId}] Sesión cerrada (loggedOut). Borrando credenciales y reiniciando para QR...`);
         sessions.delete(companyId);
+        // Sin esto, useMultiFileAuthState() vuelve a cargar las MISMAS
+        // credenciales ya inválidas en el próximo intento, y Baileys recibe
+        // 401 de nuevo de inmediato — bucle infinito que nunca llega a
+        // generar un QR nuevo para volver a vincular el número.
+        try {
+          await fs.rm(authDir, { recursive: true, force: true });
+        } catch (err) {
+          console.error(`[baileys:${companyId}] Error borrando credenciales viejas:`, err);
+        }
         setTimeout(() => startSessionFor(companyId).catch((err) =>
           console.error(`[baileys:${companyId}] Error reiniciando sesión:`, err)
         ), 3000);

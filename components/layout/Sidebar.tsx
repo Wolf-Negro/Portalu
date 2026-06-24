@@ -41,7 +41,7 @@ function buildNavItems(unreadAlerts: number, newLeads: number): NavItem[] {
     { href: "/campanas",      icon: Megaphone,       label: "Campañas",      hideForRoles: ["asesor"] },
     { href: "/whatsapp",      icon: MessageSquare,   label: "WhatsApp" },
     { href: "/alu-ia",        icon: Sparkles,        label: "ALU.IA",        badge: unreadAlerts || undefined },
-    { href: "/proyecciones",  icon: TrendingUp,      label: "Proyecciones" },
+    { href: "/proyecciones",  icon: TrendingUp,      label: "Proyecciones",  hideForRoles: ["asesor"] },
     { href: "/reportes",      icon: BarChart3,       label: "Reportes" },
     { href: "/entrenamiento", icon: GraduationCap,   label: "Entrenamiento" },
     { href: "/configuracion", icon: Settings,        label: "Configuración", hideForRoles: ["asesor"] },

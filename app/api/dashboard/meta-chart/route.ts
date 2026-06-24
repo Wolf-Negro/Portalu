@@ -52,6 +52,7 @@ type MetricKey =
   | "postReactions"
   | "postComments"
   | "postShares"
+  | "messages"
   | "cpl"
   | "roas"
   | "costPerLandingPageView";
@@ -95,6 +96,7 @@ function parseInsightEntry(entry: MetaInsightEntry): Record<MetricKey, number> {
   const postReactions = sumActions(actions, ["post_reaction", "like"]);
   const postComments = sumActions(actions, ["comment"]);
   const postShares = sumActions(actions, ["post"]);
+  const messages = sumActions(actions, ["onsite_conversion.messaging_conversation_started_7d"]);
 
   const outboundClicks = parseFloat(
     entry.outbound_clicks?.[0]?.value ?? "0"
@@ -126,6 +128,7 @@ function parseInsightEntry(entry: MetaInsightEntry): Record<MetricKey, number> {
     postReactions,
     postComments,
     postShares,
+    messages,
     cpl,
     roas,
     costPerLandingPageView,

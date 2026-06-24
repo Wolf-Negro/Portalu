@@ -16,14 +16,15 @@ export async function GET(req: NextRequest) {
   if ((session.user as any).role === "asesor") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const companyId = (session.user as any).companyId as string | undefined;
-  const { token, account: rawAccount } = await getMetaCredentials(companyId);
+  const { searchParams } = new URL(req.url);
+  const accountId = searchParams.get("account_id") || undefined;
+  const { token, account: rawAccount } = await getMetaCredentials(companyId, accountId);
   const account = rawAccount?.startsWith("act_") ? rawAccount : rawAccount ? `act_${rawAccount}` : null;
 
   if (!token || !account) {
     return NextResponse.json({ error: "Meta credentials not configured" }, { status: 400 });
   }
 
-  const { searchParams } = new URL(req.url);
   const campaignId = searchParams.get("campaign_id");
   const datePreset = searchParams.get("date_preset") || "last_30d";
 
