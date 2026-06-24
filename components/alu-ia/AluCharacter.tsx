@@ -6,9 +6,20 @@ export type AluMode = "idle" | "thinking" | "responding";
 
 export const ALU_CHARACTER_STYLES = `
   @keyframes aluFloat {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    25%       { transform: translateY(-7px) rotate(-1deg); }
-    75%       { transform: translateY(-4px) rotate(1deg); }
+    0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+    20%      { transform: translateY(-9px) rotate(-3deg) scale(1.015); }
+    50%      { transform: translateY(-3px) rotate(0deg) scale(0.99); }
+    75%      { transform: translateY(-10px) rotate(3deg) scale(1.015); }
+  }
+  @keyframes aluBreathe {
+    0%, 100% { transform: scaleY(1) scaleX(1); }
+    50%      { transform: scaleY(1.035) scaleX(0.985); }
+  }
+  @keyframes aluBlink {
+    0%, 92%, 100% { transform: scaleY(1); opacity: 0; }
+    94%            { transform: scaleY(1);    opacity: 1; }
+    96%            { transform: scaleY(0.05); opacity: 1; }
+    98%            { transform: scaleY(1);    opacity: 1; }
   }
   @keyframes aluThink {
     0%,100% { transform: translateY(0) scale(1)    rotate(0deg); }
@@ -17,11 +28,12 @@ export const ALU_CHARACTER_STYLES = `
     80%     { transform: translateY(-4px) scale(1.04) rotate(-1deg); }
   }
   @keyframes aluRespond {
-    0%   { transform: scale(1)    translateY(0); }
-    30%  { transform: scale(1.12) translateY(-10px); }
-    60%  { transform: scale(0.95) translateY(2px); }
-    80%  { transform: scale(1.05) translateY(-4px); }
-    100% { transform: scale(1)    translateY(0); }
+    0%   { transform: scale(1)    translateY(0) rotate(0deg); }
+    20%  { transform: scale(1.15) translateY(-14px) rotate(-6deg); }
+    45%  { transform: scale(0.92) translateY(3px) rotate(4deg); }
+    65%  { transform: scale(1.08) translateY(-6px) rotate(-2deg); }
+    85%  { transform: scale(0.98) translateY(1px) rotate(1deg); }
+    100% { transform: scale(1)    translateY(0) rotate(0deg); }
   }
   @keyframes aluGlowIdle {
     0%,100% { opacity: 0.4; transform: scale(1);    }
@@ -35,9 +47,15 @@ export const ALU_CHARACTER_STYLES = `
     0%,80%,100% { transform: translateY(0);   opacity: 0.4; }
     40%         { transform: translateY(-6px); opacity: 1;   }
   }
-  .alu-float   { animation: aluFloat   3.6s ease-in-out infinite; }
+  .alu-float   { animation: aluFloat   4.2s ease-in-out infinite; transform-origin: 50% 100%; }
+  .alu-breathe { animation: aluBreathe 2.6s ease-in-out infinite; transform-origin: 50% 100%; }
   .alu-think   { animation: aluThink   0.75s ease-in-out infinite; }
-  .alu-respond { animation: aluRespond 0.55s ease-out forwards; }
+  .alu-respond { animation: aluRespond 0.7s cubic-bezier(.36,1.6,.4,1) forwards; }
+  .alu-blink   { animation: aluBlink   5.5s ease-in-out infinite; }
+  .alu-wrap:hover .alu-float,
+  .alu-wrap:hover .alu-breathe {
+    animation-duration: 0.9s;
+  }
   .typing-dot {
     display: inline-block;
     width: 6px; height: 6px;
@@ -48,8 +66,13 @@ export const ALU_CHARACTER_STYLES = `
 `;
 
 // ─── Alu Character ────────────────────────────────────────────────────────────
-// Muestra solo el personaje del frente (tercio izquierdo de la imagen).
-// Usa background-image + mask radial para eliminar el fondo blanco.
+// Mascota completa de Alucinando (cuerpo entero, recortada con fondo
+// transparente desde /alu-mascot.png — ver public/alu-persona.jpeg para el
+// arte original con las 3 poses). Proporción real de la imagen: 460×741.
+// El "parpadeo" es un overlay que simula el párpado sobre la pantalla-ojo
+// (no hay capa separada del ojo en el arte original) ubicado por porcentaje
+// sobre la zona de la pantalla.
+const MASCOT_ASPECT = 741 / 460;
 
 export function AluCharacter({
   size     = 130,
@@ -68,14 +91,10 @@ export function AluCharacter({
 
   const glowAnim = mode === "thinking" ? "aluGlowThink" : "aluGlowIdle";
   const glowOpacity = mode === "thinking" ? 1 : 0.6;
-
-  // El personaje principal ocupa el ~33% izquierdo de la imagen (1320×880px).
-  // backgroundSize: 295% → imagen mostrada = size*2.95 ≈ cubre el 1/3 izquierdo.
-  // backgroundPosition: 0% 0% → empieza desde la esquina superior izquierda.
-  const height = Math.round(size * 1.35);
+  const height = Math.round(size * MASCOT_ASPECT);
 
   return (
-    <div style={{ position: "relative", width: size, height, flexShrink: 0 }}>
+    <div className="alu-wrap" style={{ position: "relative", width: size, height, flexShrink: 0 }}>
       {/* Glow externo */}
       <div style={{
         position:    "absolute",
@@ -90,31 +109,47 @@ export function AluCharacter({
         pointerEvents: "none",
       }} />
 
-      {/* Personaje */}
-      <div
-        className={animClass}
-        style={{
-          width:          "100%",
-          height:         "100%",
-          backgroundImage:    "url(/alu-persona.jpeg)",
-          backgroundSize:     "295% auto",
-          backgroundPosition: "1.5% 0%",
-          backgroundRepeat:   "no-repeat",
-          // Máscara elíptica suave → elimina el fondo blanco en los bordes
-          maskImage:          "radial-gradient(ellipse 78% 88% at 50% 38%, black 48%, transparent 78%)",
-          WebkitMaskImage:    "radial-gradient(ellipse 78% 88% at 50% 38%, black 48%, transparent 78%)",
-          filter: mode === "thinking"
-            ? "drop-shadow(0 0 18px rgba(114,85,180,0.9)) brightness(1.08)"
-            : "drop-shadow(0 0 10px rgba(114,85,180,0.5))",
-          transition: "filter 0.4s ease",
-          cursor: "default",
-        }}
-      />
+      {/* Personaje (float = balanceo completo; breathe = respiración sutil dentro) */}
+      <div className={animClass} style={{ width: "100%", height: "100%" }}>
+        <div className={noAnim ? "" : "alu-breathe"} style={{ position: "relative", width: "100%", height: "100%" }}>
+          <img
+            src="/alu-mascot-sm.png"
+            alt="Alu"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              imageRendering: "auto",
+              filter: mode === "thinking"
+                ? "drop-shadow(0 0 18px rgba(114,85,180,0.9)) brightness(1.1) contrast(1.08)"
+                : "drop-shadow(0 0 10px rgba(114,85,180,0.5)) brightness(1.05) contrast(1.06)",
+              transition: "filter 0.4s ease",
+              pointerEvents: "none",
+              display: "block",
+            }}
+          />
+          {/* Párpado simulado sobre la pantalla-ojo */}
+          {!noAnim && (
+            <div
+              className="alu-blink"
+              style={{
+                position: "absolute",
+                left: "17.5%", width: "64%",
+                top: "20.5%", height: "18.5%",
+                background: "linear-gradient(180deg,#2a2156,#15102c)",
+                borderRadius: "18%",
+                transformOrigin: "50% 0%",
+                pointerEvents: "none",
+              }}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
-// Avatar pequeño (mensajes + input bar)
+// Avatar pequeño y circular (mensajes + input bar) — recorte de la cabeza.
 export function AluAvatar({ size = 36 }: { size?: number }) {
   return (
     <div style={{
@@ -125,9 +160,10 @@ export function AluAvatar({ size = 36 }: { size?: number }) {
       flexShrink:         0,
       border:             "2px solid rgba(114,85,180,0.55)",
       boxShadow:          "0 0 10px rgba(114,85,180,0.3)",
-      backgroundImage:    "url(/alu-persona.jpeg)",
-      backgroundSize:     "295% auto",
-      backgroundPosition: "2% 5%",
+      background:         "var(--color-violet-dim)",
+      backgroundImage:    "url(/alu-mascot-sm.png)",
+      backgroundSize:     "155% auto",
+      backgroundPosition: "50% 10%",
       backgroundRepeat:   "no-repeat",
     }} />
   );
