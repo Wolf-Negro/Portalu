@@ -78,7 +78,7 @@ export default function Sidebar({ user, unreadAlerts = 0, newLeads = 0, companyL
         style={{ borderBottom: "1px solid rgba(114,85,180,0.1)" }}
       >
         {!collapsed && (
-          <div className="overflow-hidden">
+          <div className="flex-1 flex justify-center overflow-hidden">
             <Image
               src="/portalu-logo-light.png"
               alt="Portalu by Alucinando"
