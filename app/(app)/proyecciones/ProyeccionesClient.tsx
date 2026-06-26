@@ -297,12 +297,33 @@ export default function ProyeccionesClient() {
         backgroundColor: "#0f0e1d",
         logging: false,
         onclone: (doc, clonedEl) => {
-          // Second layer: remove every stylesheet from the clone so no
-          // residual oklch/lab value can survive from the cloned head.
-          doc.querySelectorAll('link[rel="stylesheet"], style').forEach((el) => el.remove());
-
+          // OJO: NO borrar las hojas de estilo del clon — el layout de este
+          // dashboard depende de tipografía/line-height/box-sizing globales.
+          // Borrarlas dejaba el texto de las filas del embudo sin altura de
+          // línea ni reset, superponiéndose entre sí. Basta con sobrescribir
+          // las variables oklch/lab (ya hecho en el documento vivo antes de
+          // clonar) y reforzarlo aquí, al final del <head> clonado para que
+          // gane por orden de cascada.
           const fix = doc.createElement("style");
           fix.textContent = `
+            :root, .dark {
+              --background:#0f0e1d; --foreground:#e9e8e6;
+              --card:#16162a; --card-foreground:#e9e8e6;
+              --popover:#16162a; --popover-foreground:#e9e8e6;
+              --primary:#e9e8e6; --primary-foreground:#0f0e1d;
+              --secondary:#1a1a2e; --secondary-foreground:#e9e8e6;
+              --muted:#1a1a2e; --muted-foreground:#a09bbf;
+              --accent:#1a1a2e; --accent-foreground:#e9e8e6;
+              --destructive:#ef4444; --destructive-foreground:#fff;
+              --border:rgba(114,85,180,0.18); --input:rgba(255,255,255,0.06);
+              --ring:rgba(114,85,180,0.4);
+              --chart-1:#7255b4; --chart-2:#a09bbf; --chart-3:#3a3550;
+              --chart-4:#2a2545; --chart-5:#1a1530;
+              --sidebar:#141420; --sidebar-foreground:#e9e8e6;
+              --sidebar-primary:#7255b4; --sidebar-primary-foreground:#fff;
+              --sidebar-accent:#1a1a2e; --sidebar-accent-foreground:#e9e8e6;
+              --sidebar-border:rgba(114,85,180,0.18); --sidebar-ring:rgba(114,85,180,0.4);
+            }
             *, *::before, *::after {
               box-sizing: border-box;
               transition: none !important;
