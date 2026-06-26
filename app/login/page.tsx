@@ -41,22 +41,14 @@ export default function LoginPage() {
 
         <div className="w-full max-w-sm animate-slide-up">
           {/* Logo */}
-          <div className="mb-10 flex items-center gap-3">
+          <div className="mb-10">
             <Image
-              src="/isotype.svg"
-              alt="Alucinando"
-              width={32}
-              height={32}
-              style={{ filter: "drop-shadow(0 0 8px rgba(114,85,180,0.6))" }}
+              src="/portalu-logo-light.png"
+              alt="Portalu by Alucinando"
+              width={198}
+              height={39}
+              style={{ filter: "drop-shadow(0 0 8px rgba(114,85,180,0.5))", width: "auto", height: 28 }}
             />
-            <div>
-              <div className="text-xl font-bold tracking-tight leading-none" style={{ color: "#e9e8e6" }}>
-                PORTALU
-              </div>
-              <div className="text-[10px] tracking-[0.18em] mt-0.5" style={{ color: "rgba(114,85,180,0.8)" }}>
-                by Alucinando
-              </div>
-            </div>
           </div>
 
           <h1 className="text-2xl font-bold mb-1" style={{ color: "#e9e8e6" }}>Bienvenido de vuelta</h1>

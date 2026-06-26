@@ -90,9 +90,8 @@ export default function LoginDashboardPreview() {
     >
       {/* Sidebar */}
       <div style={{ width: 150, flexShrink: 0, background: "#fafafd", borderRight: "1px solid #eee9f7", padding: "18px 14px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 20 }}>
-          <img src="/isotype.svg" alt="" width={20} height={20} style={{ flexShrink: 0 }} />
-          <span style={{ fontSize: 12, fontWeight: 800, color: "#1a1530", letterSpacing: "-0.02em" }}>PORTALU</span>
+        <div style={{ marginBottom: 20 }}>
+          <img src="/portalu-logo-dark.png" alt="Portalu" style={{ height: 14, width: "auto", display: "block" }} />
         </div>
         {NAV_ITEMS.map((item, i) => (
           <div

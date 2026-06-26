@@ -78,23 +78,14 @@ export default function Sidebar({ user, unreadAlerts = 0, newLeads = 0, companyL
         style={{ borderBottom: "1px solid rgba(114,85,180,0.1)" }}
       >
         {!collapsed && (
-          <div className="flex items-center gap-2.5 overflow-hidden">
+          <div className="overflow-hidden">
             <Image
-              src="/isotype.svg"
-              alt="Alucinando"
-              width={26}
-              height={26}
-              className="flex-shrink-0"
-              style={{ filter: "drop-shadow(0 0 6px rgba(114,85,180,0.6))" }}
+              src="/portalu-logo-light.png"
+              alt="Portalu by Alucinando"
+              width={158}
+              height={31}
+              style={{ filter: "drop-shadow(0 0 6px rgba(114,85,180,0.4))", width: "auto", height: 22 }}
             />
-            <div>
-              <div className="text-sm font-bold tracking-wide leading-none" style={{ color: "var(--color-text-primary)" }}>
-                PORTALU
-              </div>
-              <div className="text-[9px] tracking-[0.16em] leading-none mt-0.5" style={{ color: "var(--color-lavender)" }}>
-                ALUCINANDO
-              </div>
-            </div>
           </div>
         )}
         {collapsed && (
