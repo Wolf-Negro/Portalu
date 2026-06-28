@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { Inter, Geist } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "PORTALU — Plataforma de Marketing & Ventas | Alucinando",
@@ -18,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={cn("font-sans", geist.variable)}>
+    <html lang="es" className={cn("font-sans", dmSans.variable)}>
       <body>{children}</body>
     </html>
   );
