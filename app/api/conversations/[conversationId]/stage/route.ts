@@ -15,7 +15,7 @@ import {
   type ConvTag,
 } from "@/lib/bot-db";
 import { enviarEventoMetaCAPI } from "@/lib/bot-meta-capi";
-import { generateAiSummary } from "@/lib/bot-openai";
+import { generateAiSummary, extractLeadDetails } from "@/lib/bot-openai";
 
 export const dynamic = "force-dynamic";
 
@@ -89,10 +89,23 @@ export async function POST(
             const summary  = cf?.ai_summary ?? null;
             const isLid    = cf?.remote_jid?.endsWith("@lid") ?? false;
 
+            // Lee la conversación con IA para sacar datos puntuales que el
+            // lead haya mencionado (empresa, # de proveedores) — si no los
+            // mencionó, queda en "—", nunca se inventa.
+            const details = await extractLeadDetails(companyId, id).catch(() => null);
+            const agendadoEn = new Date().toLocaleString("es-PE", {
+              timeZone: "America/Lima",
+              day: "2-digit", month: "2-digit", year: "numeric",
+              hour: "2-digit", minute: "2-digit",
+            });
+
             const notifMsg = [
               `✅ *Nuevo Lead*`,
               `👤 *Nombre:* ${leadName}`,
-              !isLid ? `📱 *Teléfono:* +${phone}` : null,
+              !isLid ? `📱 *Número:* +${phone}` : null,
+              `🏢 *Empresa:* ${details?.companyName || "—"}`,
+              `📦 *# de proveedores:* ${details?.numProviders || "—"}`,
+              `🗓️ *Agendado:* ${agendadoEn}`,
               summary ? `📋 *Resumen:* ${summary}` : null,
             ].filter(Boolean).join("\n");
 

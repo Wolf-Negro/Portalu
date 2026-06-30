@@ -286,3 +286,58 @@ export async function generateAiSummary(companyId: string, conversationId: strin
     return null;
   }
 }
+
+export interface LeadExtraDetails {
+  companyName: string | null;
+  numProviders: string | null;
+}
+
+/** Lee el historial del chat y extrae datos puntuales mencionados por el lead
+ *  (nombre de su empresa, cantidad de proveedores) para la notificación al
+ *  asesor. Si el lead nunca mencionó un dato, queda en null — nunca se inventa. */
+export async function extractLeadDetails(companyId: string, conversationId: string): Promise<LeadExtraDetails | null> {
+  try {
+    const history = await getMessages(companyId, conversationId) || [];
+    if (history.length === 0) return null;
+
+    const appCfg = await getAppConfig(companyId);
+    const client = resolveClient(appCfg.openai_api_key);
+    if (!client) return null;
+
+    const chatText = (history as any[])
+      .filter((m) => m.text)
+      .map((m) => `${m.from_me ? "Bot" : "Lead"}: ${m.text}`)
+      .join("\n");
+
+    const response = await client.chat.completions.create({
+      model:       AI_MODEL,
+      temperature: 0,
+      max_tokens:  100,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            "Lee la conversación entre un bot de ventas y un lead. Extrae SOLO si el lead lo mencionó explícitamente: " +
+            "1) el nombre de SU empresa/negocio, 2) la cantidad de proveedores que maneja. " +
+            "Si un dato no aparece mencionado, usa null — nunca inventes ni asumas. " +
+            'Responde ÚNICAMENTE este JSON: {"companyName": string|null, "numProviders": string|null}',
+        },
+        { role: "user", content: `Historial:\n${chatText}` },
+      ],
+    });
+
+    const raw = response.choices[0].message.content?.trim();
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return {
+      companyName: typeof parsed.companyName === "string" ? parsed.companyName.slice(0, 80) : null,
+      numProviders: typeof parsed.numProviders === "string" || typeof parsed.numProviders === "number"
+        ? String(parsed.numProviders).slice(0, 20)
+        : null,
+    };
+  } catch (err) {
+    console.error("[ai] Error extrayendo detalles del lead:", err);
+    return null;
+  }
+}
