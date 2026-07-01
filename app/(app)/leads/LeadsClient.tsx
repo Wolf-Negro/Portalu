@@ -414,7 +414,7 @@ function EditLeadModal({ lead, users, onClose, onUpdated }: {
             </button>
             <button type="submit" disabled={loading}
               className="flex-1 py-2.5 rounded-lg text-sm font-semibold"
-              style={{ background: loading ? "rgba(114,85,180,0.4)" : "linear-gradient(135deg, var(--color-violet-dim), var(--color-lavender))", color: "var(--color-text-primary)" }}>
+              style={{ background: loading ? "rgba(114,85,180,0.4)" : "linear-gradient(135deg, var(--color-violet-dim), var(--color-lavender))", color: "#ffffff" }}>
               {loading ? "Guardando..." : "Guardar cambios"}
             </button>
           </div>
@@ -725,7 +725,7 @@ export default function LeadsClient({ leads: initialLeads, total, pageSize, user
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
-                        style={{ background: "linear-gradient(135deg, var(--color-violet-dim), var(--color-lavender))", color: "var(--color-text-primary)" }}>
+                        style={{ background: "linear-gradient(135deg, var(--color-violet-dim), var(--color-lavender))", color: "#ffffff" }}>
                         {lead.name.charAt(0).toUpperCase()}
                       </div>
                       <span className="font-medium" style={{ color: "var(--color-text-primary)" }}>{lead.name}</span>
