@@ -595,7 +595,7 @@ export default function LeadsClient({ leads: initialLeads, total, pageSize, user
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
           style={{
             background: "linear-gradient(135deg, var(--color-violet-dim) 0%, var(--color-lavender) 100%)",
-            color: "var(--color-text-primary)",
+            color: "#ffffff",
             boxShadow: "0 4px 16px rgba(43,9,111,0.4)",
           }}
         >
