@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import prisma from "@/lib/prisma";
 import {
   sql,
   resolveConvId,
@@ -57,6 +58,39 @@ export async function POST(
     }
 
     await emitEvent(companyId, "chat:updated", { conversationId: id, stage });
+
+    // Al llegar al primer stage de calificación, crear automáticamente un
+    // Lead en el CRM para que aparezca en el módulo Leads de Portalu.
+    // Se usa upsert by (companyId + phone) para no duplicar si el stage
+    // se reasigna; si el phone es un LID de WA (sin número real), se crea
+    // igualmente pero sin campo phone.
+    if (stage === "REGISTRO") {
+      try {
+        const [convForLead] = await sql`
+          SELECT name, phone, metadata, remote_jid FROM conversations
+          WHERE id = ${id} AND company_id = ${companyId}
+        `;
+        if (convForLead) {
+          const cf      = convForLead as any;
+          const isLid   = cf.remote_jid?.endsWith("@lid") ?? false;
+          const realPhone = isLid ? null : (cf.phone as string | null);
+          const meta    = (() => { try { return JSON.parse(cf.metadata || "{}"); } catch { return {}; } })();
+          const leadName = meta.pushName ?? cf.name ?? (realPhone ?? "Contacto WhatsApp");
+
+          // Evitar duplicado: si ya existe un Lead con ese teléfono en esta empresa, no crear otro.
+          const exists = realPhone
+            ? await prisma.lead.findFirst({ where: { companyId, phone: realPhone } })
+            : null;
+          if (!exists) {
+            await prisma.lead.create({
+              data: { name: leadName, phone: realPhone ?? undefined, origin: "whatsapp", status: "nuevo", companyId },
+            });
+          }
+        }
+      } catch (err) {
+        console.error("[stage-api] Error creando Lead CRM desde WhatsApp:", err);
+      }
+    }
 
     const [convRow] = await sql`SELECT phone FROM conversations WHERE id = ${id} AND company_id = ${companyId}`;
 

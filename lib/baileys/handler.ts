@@ -19,9 +19,38 @@ import {
   getAppConfig,
 } from "../bot-db";
 import { generateReply, analyzeImage, transcribeAudio, extractPdfText } from "../bot-openai";
+import prisma from "../prisma";
 import { enviarEventoMetaCAPI } from "../bot-meta-capi";
 import { enqueueMessage } from "../bot-message-queue";
 import { broadcastWs } from "../bot-ws-server";
+
+/** Crea un registro Lead en el CRM cuando llega un nuevo contacto de WhatsApp,
+ *  para que aparezca en el módulo Leads de Portalu. Idempotente: si ya existe
+ *  un Lead con ese teléfono para la empresa, no crea duplicado. */
+async function ensureCrmLead(companyId: string, remoteJid: string, displayName: string): Promise<void> {
+  try {
+    const isLid    = remoteJid.endsWith("@lid");
+    const rawPhone = remoteJid.split("@")[0];
+    const phone    = isLid ? null : rawPhone;
+
+    const exists = phone
+      ? await prisma.lead.findFirst({ where: { companyId, phone } })
+      : null;
+    if (!exists) {
+      await prisma.lead.create({
+        data: {
+          name: displayName || phone || "Contacto WhatsApp",
+          phone: phone ?? undefined,
+          origin: "whatsapp",
+          status: "nuevo",
+          companyId,
+        },
+      });
+    }
+  } catch (err) {
+    console.error("[bot] Error creando Lead CRM desde WhatsApp:", err);
+  }
+}
 
 const ACTION_QUALIFY_REGEX            = /\[ACTION:QUALIFY\]/i;
 const ACTION_DERIVE_REGEX             = /\[ACTION:DERIVE\]/i;
@@ -357,6 +386,7 @@ export const handleIncomingMessages = async (sock: any, m: any, companyId: strin
         const convo  = await getOrCreateConversation(companyId, phone, msg.pushName || phone, remoteJid);
         const convId = String((convo as any).id);
         await addConvTag(companyId, convId, "REGISTRO");
+        await ensureCrmLead(companyId, remoteJid, msg.pushName || (convo as any).name || phone);
 
         if (mediaType === "imageMessage") {
           let msgText: string = MEDIA_TYPES.imageMessage.placeholder;
@@ -557,6 +587,7 @@ export const handleIncomingMessages = async (sock: any, m: any, companyId: strin
       await insertMessage(companyId, (convo as any).id, "user", text);
       const convId = String((convo as any).id);
       await addConvTag(companyId, convId, "REGISTRO");
+      await ensureCrmLead(companyId, remoteJid, msg.pushName || (convo as any).name || phone);
       await emitEvent(companyId, "message:new", { conversationId: convId, phone, source: "user" });
       broadcastWs(companyId, "message:new", { conversationId: convId, phone, source: "user" });
 

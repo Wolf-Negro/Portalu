@@ -245,21 +245,32 @@ function MetricCardContent({
     );
   }
 
+  const accentColor = cfg?.color ?? "var(--color-lavender)";
   return (
-    <div style={{ padding: "16px 18px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-      <div style={{ fontSize: 34, fontWeight: 900, color: cfg?.color ?? "var(--color-text-primary)", lineHeight: 1, marginBottom: 6 }}>
-        {formatted}
-      </div>
-      <div style={{ fontSize: 11.5, color: "var(--color-text-faint)" }}>{cfg?.description}</div>
-      {delta !== null && (
+    <div style={{ display: "flex", height: "100%" }}>
+      {/* Franja lateral de color por tipo de métrica */}
+      <div style={{ width: 4, flexShrink: 0, background: accentColor, borderRadius: "0 0 0 0", opacity: 0.9 }} />
+      <div style={{ padding: "16px 18px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <div style={{
-          fontSize: 11, marginTop: 4, display: "flex", alignItems: "center", gap: 3,
-          color: deltaPositive ? "var(--color-success)" : "var(--color-coral)",
+          fontSize: 38, fontWeight: 900, letterSpacing: "-0.03em",
+          color: accentColor, lineHeight: 1, marginBottom: 6,
+          textShadow: `0 0 28px ${accentColor}40`,
         }}>
-          <span>{delta > 0 ? "↑" : "↓"}</span>
-          <span>{Math.abs(delta).toFixed(1)}% vs ayer</span>
+          {formatted}
         </div>
-      )}
+        <div style={{ fontSize: 11.5, color: "var(--color-text-faint)" }}>{cfg?.description}</div>
+        {delta !== null && (
+          <div style={{
+            fontSize: 11, marginTop: 5, display: "inline-flex", alignItems: "center", gap: 4,
+            color: deltaPositive ? "var(--color-success)" : "var(--color-coral)",
+            background: deltaPositive ? "rgba(34,197,94,0.1)" : "rgba(250,117,83,0.1)",
+            padding: "2px 8px", borderRadius: 20, width: "fit-content",
+          }}>
+            <span style={{ fontWeight: 700 }}>{delta > 0 ? "↑" : "↓"}</span>
+            <span>{Math.abs(delta).toFixed(1)}% vs ayer</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1061,7 +1072,7 @@ export default function DashboardClient({
         .react-grid-item.react-grid-placeholder {
           background: rgba(114,85,180,0.15) !important;
           border: 2px dashed rgba(114,85,180,0.4) !important;
-          border-radius: 14px !important;
+          border-radius: 22px !important;
           opacity: 1 !important;
         }
         .react-resizable-handle {
@@ -1596,7 +1607,7 @@ export default function DashboardClient({
         {/* ── Header ── */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "18px 22px", borderRadius: 14, marginBottom: 16,
+          padding: "18px 22px", borderRadius: 18, marginBottom: 16,
           background: "linear-gradient(135deg,rgba(43,9,111,0.25) 0%,rgba(114,85,180,0.08) 100%)",
           border: "1px solid rgba(114,85,180,0.15)",
         }}>
@@ -2051,10 +2062,11 @@ export default function DashboardClient({
                     style={{
                       background: "var(--color-surface-card)",
                       border: "1px solid rgba(114,85,180,0.18)",
-                      borderRadius: 14,
+                      borderRadius: 22,
                       display: "flex",
                       flexDirection: "column",
                       overflow: "hidden",
+                      boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
                     }}
                   >
                     {/* Drag-handle header */}
